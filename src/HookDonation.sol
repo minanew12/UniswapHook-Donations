@@ -8,16 +8,19 @@ import {BalanceDelta} from "lib/v4-periphery/lib/v4-core/src/types/BalanceDelta.
 import {Hooks} from "lib/v4-periphery/lib/v4-core/src/libraries/Hooks.sol";
 import {CurrencyLibrary, Currency} from "v4-core/types/Currency.sol";
 
+// For checking expected values
+import "lib/v4-periphery/lib/v4-core/lib/forge-std/src/console.sol";
+
 contract AfterSwapDonationHook is BaseHook {
     using CurrencyLibrary for Currency;
     struct DonationMapping {
-        bool enabled;
         address payable recipient;
         uint256 percent; // how much to donate
     }
     address public owner;
     address public pool;
-    mapping(address => DonationMapping) donationMap; 
+    mapping(address => DonationMapping) donationMap;
+    uint public testValue; 
 
 // -------------- begin donation associated functions ---------------
     function disableDonation() public {
@@ -26,31 +29,50 @@ contract AfterSwapDonationHook is BaseHook {
     }
 
     function enableDonation(address recipient, uint256 percent) public {
-        DonationMapping memory local;
-        local.recipient = payable(recipient);
-        local.percent   = percent;
+        console.log("enableDonation msg.sender: %s", msg.sender);
+        console.log("enableDonation recipient: %s", recipient);
+        console.log("enableDonation percent: %s", percent);
 
-        donationMap[msg.sender] = local;
+        // DonationMapping memory local = DonationMapping(payable(recipient), percent);
+        // local.recipient = payable(recipient);
+        // local.percent   = percent;
+        // donationMap[msg.sender] = local;
+
+        donationMap[msg.sender] = DonationMapping(payable(recipient), percent);
+        // DonationMapping memory local = donationMap[msg.sender];
+        // console.log("after enableDonation msg.sender: %s", msg.sender);
+        // console.log("after enableDonation recipient: %s", local.recipient);
+        // console.log("after enableDonation percent: %s", local.percent);
+
+        // donationMap[msg.sender].recipient = payable(recipient);
+        // donationMap[msg.sender].percent = percent;
+
+        testValue++;
     }
+
+    // function donationDetails() public view returns (DonationMapping memory) {
+    //     return donationMap[msg.sender];
+    // }
 
     // the following should all have internal view, not public
     // but have been changed to public view for testing
 
-    function donationEnabled(address payee) public view returns (bool) {
-        return (donationMap[payee].recipient != payable(0x0));
+    function donationEnabled() public view returns (bool) {
+        return (donationMap[msg.sender].recipient != payable(0x0));
     }
 
-    function donationPercent(address payee) public view returns (uint256) {
-        return (donationMap[payee].percent);
+    function donationPercent() public view returns (uint256) {
+        return (donationMap[msg.sender].percent);
     }
 
-    function donationRecipient(address payee) public view returns (address) {
-        return (donationMap[payee].recipient);
+    function donationRecipient() public view returns (address) {
+        return (donationMap[msg.sender].recipient);
     }
 // -------------- end donation associated functions ---------------
 
     constructor(IPoolManager _poolManager) BaseHook(_poolManager) {
         owner = msg.sender;
+        testValue = 1; // for testing
     }
 
     // Modifier to restrict access to the owner
@@ -60,7 +82,7 @@ contract AfterSwapDonationHook is BaseHook {
     }
 
     /// @notice The hook called after a swap
-    /// @param sender The initial msg.sender for the swap call
+    /// @param ...sender The initial msg.sender for the swap call
     /// @param key The key for the pool
     /// @param swapParams The parameters for the swap
     /// @param delta The amount owed to the caller (positive) or owed to the pool (negative)
@@ -68,7 +90,7 @@ contract AfterSwapDonationHook is BaseHook {
     /// @return bytes4 The function selector for the hook
     /// @return int128 The hook's delta in unspecified currency. Positive: the hook is owed/took currency, negative: the hook owes/sent currency
     function afterSwap(
-        address sender,
+        address, // sender,
         PoolKey calldata key,
         IPoolManager.SwapParams calldata swapParams,
         BalanceDelta delta,
@@ -77,15 +99,15 @@ contract AfterSwapDonationHook is BaseHook {
         require(msg.sender == address(pool), "Unauthorized caller");
         
         // Check that donation is enabled for the sender
-        if (!donationEnabled(sender))
+        if (!donationEnabled())
             return (this.afterSwap.selector, 0);
         
         uint256 spendAmount = swapParams.amountSpecified < 0
             ? uint256(-swapParams.amountSpecified)
             : uint256(int256(-delta.amount0()));
 
-        uint256 donationAmount = (spendAmount * donationPercent(sender)) / 100;
-        address recipient = donationRecipient(sender);
+        uint256 donationAmount = (spendAmount * donationPercent()) / 100;
+        address recipient = donationRecipient();
 
         key.currency0.transfer(recipient, donationAmount);
 
