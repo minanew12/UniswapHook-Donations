@@ -106,6 +106,7 @@ contract DonationTest is Test, Deployers {
         console.log("enabled: %s", enabled);
         console.log("recipient: %s", recipient);
         console.log();
+        assert(!enabled);
 
         enableDonation(RECIPIENT, 10); // recipient = 0x01, 10 percent
         console.log("After enabling donation");
@@ -114,6 +115,8 @@ contract DonationTest is Test, Deployers {
         recipient = donationRecipient(payee);
         console.log("enabled: %s", enabled);
         console.log("recipient: %s", recipient);
+        assert(enabled);
+
     }
 
     function test_enableDonation() public {
@@ -125,6 +128,7 @@ contract DonationTest is Test, Deployers {
         console.log("enabled: %s", enabled);
         console.log("recipient: %s", recipient);
         console.log();
+        assert(!enabled);
 
         donationHook.enableDonation(RECIPIENT, 10); // recipient = 0x01, 10 percent
         console.log("After enabling donation");
@@ -133,6 +137,7 @@ contract DonationTest is Test, Deployers {
         recipient = donationHook.donationRecipient(payee);
         console.log("enabled: %s", enabled);
         console.log("recipient: %s", recipient);
+        assert(enabled);
     }
 
     function test_Donation() public {
