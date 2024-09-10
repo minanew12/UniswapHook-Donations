@@ -136,36 +136,6 @@ contract DonationTest is Test, Deployers {
         donationMap[msg.sender] = AfterSwapDonationHook.DonationMapping(payable(recipient), percent);
     }
 
-    // function test_internalEnableDonation() public {
-    //     address payee = msg.sender;
-    //     bool enabled = donationEnabled(payee);
-    //     address recipient = donationRecipient(payee);
-
-    //     header("Before enabling donation");
-    //     console.log("payee: %s", payee);
-    //     console.log("enabled: %s", enabled);
-    //     console.log("recipient: %s", recipient);
-    //     console.log();
-    //     assert(!enabled);
-
-    //     enableDonation(RECIPIENT, 10); // recipient = 0x01, 10 percent
-    //     enabled = donationEnabled(payee);
-    //     recipient = donationRecipient(payee);
-
-    //     header("After enabling donation");
-    //     console.log("payee: %s", payee);
-    //     console.log("enabled: %s", enabled);
-    //     console.log("recipient: %s", recipient);
-
-    //     assert(enabled);
-    //     assert(recipient == RECIPIENT);
-    // }
-
-    // function test_testValue() public view {
-    //     uint testValue = donationHook.testValue();
-    //     assert(testValue == 1);
-    // }
-
     function separator() internal view {
         console.log("--------------------------------------------------------------------------------");
     }
