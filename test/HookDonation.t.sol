@@ -34,10 +34,6 @@ contract DonationTest is Test, Deployers //, ISwap
 
     event HookAddress(address indexed hookAddress);
 
-    function boolToStr(bool value) internal pure returns (string memory) {
-        return value ? "true": "false";
-    }
-
     function setUp() public {
         console.log("setUp tx.origin: %s, msg.sender: %s", tx.origin, msg.sender);
         deployFreshManagerAndRouters();

@@ -24,59 +24,32 @@ contract AfterSwapDonationHook is BaseHook {
     address public owner;
     mapping(address => DonationMapping) donationMap;
 
-    function boolToStr(bool value) internal pure returns (string memory) {
-        return value ? "true": "false";
-    }
-    
 // -------------- begin donation associated functions ---------------
+    /// Disables donation for msg.sender
     function disableDonation() public {
         // Reset the value to the default value.
-        console.log("function disableDonation()");
-        console.log("disableDonation msg.sender: %s", msg.sender);
         delete donationMap[msg.sender];
     }
 
+    /// Enables donation to the specified recipient, with the given percentage
     function enableDonation(address recipient, uint256 percent) public {
         console.log("enableDonation tx.origin: %s", tx.origin);
         console.log("enableDonation msg.sender: %s", msg.sender);
         console.log("enableDonation recipient: %s", recipient);
         console.log("enableDonation percent: %s", percent);
 
-        // DonationMapping memory local = DonationMapping(payable(recipient), percent);
-        // local.recipient = payable(recipient);
-        // local.percent   = percent;
-        // donationMap[msg.sender] = local;
-
-        // console.log("enableDonation function");
-        // console.log("Enabling donation for msg.sender %s to recipient %s", msg.sender, recipient);
-        // donationMap[msg.sender] = DonationMapping(payable(recipient), percent);
         console.log("enableDonation(address recipient, uint256 percent)");
         donationMap[tx.origin] = DonationMapping(payable(recipient), percent);
 
-        // DonationMapping memory local = donationMap[msg.sender];
-        // console.log("after enableDonation msg.sender: %s", msg.sender);
-        // console.log("after enableDonation recipient: %s", local.recipient);
-        // console.log("after enableDonation percent: %s", local.percent);
-
-        // donationMap[msg.sender].recipient = payable(recipient);
-        // donationMap[msg.sender].percent = percent;
     }
-
-    // function enableDonation(address recipient, uint256 percent, address token0, address token1) public {
-    //     enableDonation(recipient, percent);
-    //     approveSpending(token0);
-    //     approveSpending(token1);
-    // }
 
     // the following should all have internal view, not public
     // but have been changed to public view for testing
 
     function donationEnabled(address addr) public view returns (bool) {
         bool result = donationMap[addr].recipient != payable(0x0);
-        console.log("donation enabled: %s for %s", boolToStr(result), msg.sender);
         return result;
     }
-
     function donationEnabled() public view returns (bool) {
         bool result = donationEnabled(msg.sender);
         return result;
@@ -90,28 +63,31 @@ contract AfterSwapDonationHook is BaseHook {
         return donationMap[addr].percent;
     }
     function donationPercent() public view returns (uint256) {
-        return donationPercent(msg.sender); // donationMap[msg.sender].percent;
+        return donationPercent(msg.sender);
     }
 
     function donationRecipient(address addr) public view returns (address) {
         return donationMap[addr].recipient;
     }
     function donationRecipient() public view returns (address) {
-        return donationRecipient(msg.sender); // donationMap[msg.sender].recipient;
+        return donationRecipient(msg.sender);
     }
 
 // -------------- end donation associated functions ---------------
 
     constructor(IPoolManager _poolManager) BaseHook(_poolManager) {
         owner = msg.sender;
-        console.log("Owner: %s", owner);
-        console.log("Pool manager: %s", address(poolManager));
-        // testValue = 1; // for testing
     }
 
     // Modifier to restrict access to the owner
     modifier onlyOwner() {
         require(msg.sender == owner, "Not authorized");
+        _;
+    }
+
+    /// Modifier to restrict access only to pool manager
+    modifier onlyPoolManager() {
+        require(msg.sender == address(poolManager), "Unauthorized caller");
         _;
     }
 
@@ -129,8 +105,8 @@ contract AfterSwapDonationHook is BaseHook {
         IPoolManager.SwapParams calldata swapParams,
         BalanceDelta delta,
         bytes calldata // userdata
-    ) external override returns (bytes4, int128) {
-        require(msg.sender == address(poolManager), "Unauthorized caller");
+    ) external override returns (bytes4, int128) onlyPoolManager {
+        // require(msg.sender == address(poolManager), "Unauthorized caller");
         // msg.sender is the pool manager's address
 
         console.log("afterSwap tx.origin %s", tx.origin);
