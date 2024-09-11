@@ -38,9 +38,10 @@ contract AfterSwapDonationHook is BaseHook {
     }
 
     function enableDonation(address recipient, uint256 percent) public {
-        // console.log("enableDonation msg.sender: %s", msg.sender);
-        // console.log("enableDonation recipient: %s", recipient);
-        // console.log("enableDonation percent: %s", percent);
+        console.log("enableDonation tx.origin: %s", tx.origin);
+        console.log("enableDonation msg.sender: %s", msg.sender);
+        console.log("enableDonation recipient: %s", recipient);
+        console.log("enableDonation percent: %s", percent);
 
         // DonationMapping memory local = DonationMapping(payable(recipient), percent);
         // local.recipient = payable(recipient);
@@ -51,8 +52,7 @@ contract AfterSwapDonationHook is BaseHook {
         // console.log("Enabling donation for msg.sender %s to recipient %s", msg.sender, recipient);
         // donationMap[msg.sender] = DonationMapping(payable(recipient), percent);
         console.log("enableDonation(address recipient, uint256 percent)");
-        console.log("enableDonation msg.sender %s", msg.sender);
-        donationMap[msg.sender] = DonationMapping(payable(recipient), percent);
+        donationMap[tx.origin] = DonationMapping(payable(recipient), percent);
 
         // DonationMapping memory local = donationMap[msg.sender];
         // console.log("after enableDonation msg.sender: %s", msg.sender);
@@ -72,9 +72,14 @@ contract AfterSwapDonationHook is BaseHook {
     // the following should all have internal view, not public
     // but have been changed to public view for testing
 
-    function donationEnabled() public view returns (bool) {
-        bool result = donationMap[msg.sender].recipient != payable(0x0);
+    function donationEnabled(address addr) public view returns (bool) {
+        bool result = donationMap[addr].recipient != payable(0x0);
         console.log("donation enabled: %s for %s", boolToStr(result), msg.sender);
+        return result;
+    }
+
+    function donationEnabled() public view returns (bool) {
+        bool result = donationEnabled(msg.sender);
         return result;
     }
 
@@ -82,12 +87,18 @@ contract AfterSwapDonationHook is BaseHook {
         return msg.sender;
     }
 
+    function donationPercent(address addr) public view returns (uint256) {
+        return donationMap[addr].percent;
+    }
     function donationPercent() public view returns (uint256) {
-        return donationMap[msg.sender].percent;
+        return donationPercent(msg.sender); // donationMap[msg.sender].percent;
     }
 
+    function donationRecipient(address addr) public view returns (address) {
+        return donationMap[addr].recipient;
+    }
     function donationRecipient() public view returns (address) {
-        return donationMap[msg.sender].recipient;
+        return donationRecipient(msg.sender); // donationMap[msg.sender].recipient;
     }
 
 // -------------- end donation associated functions ---------------
@@ -125,24 +136,30 @@ contract AfterSwapDonationHook is BaseHook {
 
         console.log("afterSwap tx.origin %s", tx.origin);
         console.log("afterSwap parameter sender: %s", sender);
-        address msgSender = abi.decode(userdata, (address));
         console.log("afterSwap msg.sender: %s", msg.sender);
-        console.log("encoded userdata msgSender: %s", msgSender);
+        console.log("afterSwap this: %s", address(this));
+
+        // address msgSender = abi.decode(userdata, (address));
+        // console.log("afterSwap msg.sender: %s", msg.sender);
+        // console.log("encoded userdata msgSender: %s", msgSender);
         
         // Check that donation is enabled for the sender
-        if (!donationEnabled()) {
-            console.log("donation not enabled!");
+        if (!donationEnabled(tx.origin)) {
+            console.log("147 Donation not enabled for %s!", tx.origin);
             return (this.afterSwap.selector, 0);
+        } else {
+            console.log("150 Donation enabled for %s", tx.origin);
         }
+
         uint256 spendAmount = swapParams.amountSpecified < 0
             ? uint256(-swapParams.amountSpecified)
             : uint256(int256(-delta.amount0()));
-        uint256 percent = donationPercent();
+        uint256 percent = donationPercent(tx.origin);
         uint256 donationAmount = (spendAmount * percent) / 100;
-        console.log("Donation percent: %s", percent);
+        console.log("158 Donation percent: %s", percent);
         console.log("   spendAmount: %s", spendAmount);
         console.log("donationAmount: %s", donationAmount);
-        address recipient = donationRecipient();
+        address recipient = donationRecipient(tx.origin);
         console.log("recipient: %s", recipient);
 
         console.log("Transferring now");
@@ -151,9 +168,15 @@ contract AfterSwapDonationHook is BaseHook {
         console.log("Balance Of %s is %s", tx.origin, token.balanceOf(tx.origin));
         uint allowance = token.allowance(tx.origin, msg.sender);
         // msg.sender here is manager
-        console.log("156 Allowance owner: %s spender: %s, allowance: %s", tx.origin, msg.sender, allowance);
-        // token.transferFrom(tx.origin, recipient, donationAmount);
-        // token.allowance()
+        console.log("170 Allowance owner: %s spender: %s, allowance: %s", tx.origin, msg.sender, allowance);
+        uint balanceOriginBefore = token.balanceOf(tx.origin);
+        uint balanceRecipientBefore = token.balanceOf(recipient);
+        console.log("173 tx.origin balance before: %s, recipient balance before: %s", balanceOriginBefore, balanceRecipientBefore);
+        token.transferFrom(tx.origin, recipient, donationAmount);
+        uint balanceOriginAfter = token.balanceOf(tx.origin);
+        uint balanceRecipientAfter = token.balanceOf(recipient);
+        console.log("177 tx.origin balance after: %s, recipient balance after: %s", balanceOriginAfter, balanceRecipientAfter);
+        
         console.log("Transfer succeeded");
 
         return (this.afterSwap.selector, 0);

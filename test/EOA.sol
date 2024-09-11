@@ -10,7 +10,7 @@ import {AfterSwapDonationHook} from "../src/HookDonation.sol";
 import {PoolSwapTest} from "lib/v4-core/src/test/PoolSwapTest.sol";
 import {Constants} from "lib/v4-core/test/utils/Constants.sol";
 
-// This is a contract that pretends to be an end-user
+// This is a contract that pretends to be an end-user / externally owned accounts / wallet
 contract EOA {
 
     IPoolManager manager;
@@ -51,11 +51,12 @@ contract EOA {
                 sqrtPriceLimitX96: Constants.SQRT_PRICE_1_1
             })
         );
-        // swapRouter.swap(key, params);
     }
 
-    function swap(PoolKey memory _key, bool zeroForOne, int256 amountSpecified, bytes memory hookData) public {
-        // deployers.swap(_key, zeroForOne, amountSpecified, hookData);
+    function swap(IPoolManager.SwapParams memory params,  
+      bytes memory hookData
+    ) public {
+        manager.swap(pool, params, hookData);
     }
 
     function disableDonation() public {

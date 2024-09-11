@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MIT 
 pragma solidity ^0.8.26;
 
-// forge-std/=lib/v4-periphery/lib/v4-core/lib/forge-std/src/
 import "lib/v4-periphery/lib/v4-core/lib/forge-std/src/Test.sol";
-import "lib/v4-periphery/lib/v4-core/lib/forge-std/src/console.sol";
+import {console} from "lib/v4-periphery/lib/v4-core/lib/forge-std/src/console.sol";
 import {Hooks} from "lib/v4-core/src/libraries/Hooks.sol";
 import {Deployers} from "lib/v4-core/test/utils/Deployers.sol";
 import {IPoolManager} from "lib/v4-core/src/interfaces/IPoolManager.sol";
 import {AfterSwapDonationHook} from "../src/HookDonation.sol";
 import {Currency, CurrencyLibrary} from "lib/v4-core/src/types/Currency.sol";
 import {MockERC20} from "lib/v4-core/lib/solmate/src/test/utils/mocks/MockERC20.sol"; // ...
-// K:\Development\Ethereum\UniswapHook-Donations\lib\v4-core\lib\forge-std\src\mocks\MockERC20.sol
-// import {MockERC20} from "lib/v4-core/lib/forge-std/src/mocks/MockERC20.sol";
 import {PoolKey} from "lib/v4-core/src/types/PoolKey.sol";
 import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
 import {HookMiner} from "./utils/HookMiner.sol";
@@ -20,13 +17,9 @@ import {BaseHook} from "lib/v4-periphery/src/base/hooks/BaseHook.sol";
 import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
 import {EOA} from "./EOA.sol";
 
-contract DonationTest is Test, Deployers {
+contract DonationTest is Test, Deployers //, ISwap 
+{
     using CurrencyLibrary for Currency;
-
-    // mapping(address => AfterSwapDonationHook.DonationMapping) donationMap; 
-
-    // address constant USDT_MOCK_ADDRESS = address(0xEce6af52f8eDF69dd2C216b9C3f184e5b31750e9); // mock address
-    // address constant USDC_MOCK_ADDRESS = address(0x63ba29cAF4c40DaDA8a61D10AB5D2728c806b61f); // mock address
 
     AfterSwapDonationHook donationHook;
     
@@ -67,59 +60,7 @@ contract DonationTest is Test, Deployers {
         donationHook = AfterSwapDonationHook(hookAddress);
         console.log("setUp Hook Address: ", hookAddress);
         console.log("donation Hook: ", address(donationHook));
-        // console.log("testValue: %s", donationHook.testValue);
-
-        // // Approve our hook address to spend these tokens as well
-        // MockERC20(Currency.unwrap(token0)).approve(
-        //     address(donationHook),
-        //     type(uint256).max
-        // );
-        // MockERC20(Currency.unwrap(token1)).approve(
-        //     address(donationHook),
-        //     type(uint256).max
-        // );
-        // uint256 allowance0 = MockERC20(Currency.unwrap(token0)).allowance(address(this), address(donationHook));
-        // console.log("Allowance owner: %s, spender: %s, allowance: %s", address(this), address(donationHook), allowance0);
-
-        // MockERC20 t0 = MockERC20(Currency.unwrap(token0));
-        // MockERC20 t1 = MockERC20(Currency.unwrap(token1));
         console.log("setUp sender: %s", msg.sender);
-
-        // address mint_to = address(this);
-        // t0.mint(mint_to, 100 ether); // this is successful
-        // uint balance = t0.balanceOf(mint_to);
-        // // Balance Of: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38 is 100000000000000000000
-        // console.log("102 Balance Of: %s is %s", mint_to, balance);
-        // t1.mint(mint_to, 100 ether);
-        
-        // address mint_to_origin = address(tx.origin);
-        // t0.mint(mint_to_origin, 100 ether); // this is successful
-        // balance = t0.balanceOf(mint_to_origin);
-        // // Balance Of: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38 is 100000000000000000000
-        // console.log("109 t0 Balance Of: %s is %s", mint_to_origin, balance);
-        // t1.mint(mint_to_origin, 100 ether);
-        // balance = t1.balanceOf(mint_to_origin);
-        // // Balance Of: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38 is 100000000000000000000
-        // console.log("113 t1 Balance Of: %s is %s", mint_to_origin, balance);
-
-        // // approves spending by poolManager for token0 / token1, so that afterSwap can transfer
-        // // afterSwap's msg.sender is the manager, so approve it to spend on behalf
-        // t0.approve(address(manager), type(uint256).max);
-        // t1.approve(address(manager), type(uint256).max);
-
-        // uint allowance = t0.allowance(address(this), address(manager));
-        // console.log("121 Allowance owner: %s, spender: %s, allowance: %s", address(this), address(manager), allowance);
-
-        // // approves spending by poolManager for token0 / token1, so that afterSwap can transfer
-        // (bool approved1, address spender1) = donationHook.approveSpending(address(Currency.unwrap(token0)));
-        // uint allowance1 = t0.allowance(address(this), address(spender1));
-        // console.log("Approved: %s", boolToStr(approved1));
-        // console.log("127 Allowance owner: %s, spender: %s, allowance: %s", address(this), spender1, allowance1);
-
-        // (bool approved2, address spender2) = donationHook.approveSpending(address(Currency.unwrap(token1)));
-        // uint allowance2 = t0.allowance(msg.sender, spender2);
-        // console.log("Approved: %s", boolToStr(approved2));
-        // console.log("132 Allowance owner: %s, spender: %s, allowance: %s", address(this), spender2, allowance2);
 
         IHooks ihook = IHooks(address(donationHook));
 
@@ -128,6 +69,7 @@ contract DonationTest is Test, Deployers {
         (key, ) = initPoolAndAddLiquidity(token0, token1, ihook, fee, SQRT_PRICE_1_1, ZERO_BYTES);
         
         globalKey = key;
+        separator();
     }
 
     function separator() internal view {
@@ -143,259 +85,81 @@ contract DonationTest is Test, Deployers {
         separator();
     }
 
-    // function test_enableDonation() public {
-    //     address payee = msg.sender;
-    //     bool enabled = donationHook.donationEnabled();
-    //     address recipient = donationHook.donationRecipient();
+    function test_enableDonation() public {
+        address payee = tx.origin;
+        vm.startPrank(payee);
 
-    //     header("Before enabling donation");
-    //     console.log("msg.sender: %s", msg.sender);
-    //     console.log("payee: %s", payee);
-    //     console.log("enabled: %s", enabled);
-    //     console.log("recipient: %s", recipient);
-    //     // console.log("testValue: %s", donationHook.testValue());
-    //     println();
+        bool enabled = donationHook.donationEnabled();
+        address recipient = donationHook.donationRecipient();
+
+        println();
+        header("Before enabling donation");
+        payee = donationHook.donationPayee();
+        console.log("msg.sender: %s", msg.sender);
+        console.log("payee: %s", payee);
+        console.log("enabled: %s", enabled);
+        console.log("recipient: %s", recipient);
+        // console.log("testValue: %s", donationHook.testValue());
+        println();
         
-    //     assert(!enabled);
-    //     assert(recipient == address(0));
+        assert(!enabled);
+        assert(recipient == address(0));
 
-    //     uint enabledPercent = 10;
-    //     // (bool success, bytes memory data) = address(donationHook).delegatecall(
-    //     //     abi.encodeWithSignature("enableDonation(address, uint)", RECIPIENT, enabledPercent)
-    //     // );
-    //     donationHook.enableDonation(RECIPIENT, enabledPercent);
-
-    //     recipient = donationHook.donationRecipient();
-    //     enabled = donationHook.donationEnabled();
-    //     uint fetchedPercent = donationHook.donationPercent();
-
-    //     println();
-    //     header("After enabling donation");
-    //     console.log("msg.sender: %s", msg.sender);
-    //     console.log("tx.origin: %s", tx.origin);
-    //     console.log("payee: %s", payee);
-    //     console.log("enabled: %s", enabled);
-    //     console.log("recipient: %s", recipient);
-
-    //     assert(enabled);
-    //     assert(recipient == RECIPIENT);
-    //     assert(fetchedPercent == enabledPercent);
-    // }
-
-    // // function disableDonation(address addrRecipient, uint givenPercent) internal {
-    // //     bool enabled = donationHook.donationEnabled(msg.sender);
-    // //     address recipient = donationHook.donationRecipient(msg.sender);
-
-    // //     uint percent = givenPercent;
-    // //     if (!enabled) {
-    // //         console.log("Donation not enabled!");
-    // //         console.log("Enabling donation");
-    // //         donationHook.enableDonation(addrRecipient, percent);
-    // //     }
-
-    // //     enabled = donationHook.donationEnabled(msg.sender);
-    // //     recipient = donationHook.donationRecipient(msg.sender);
-    // //     assert(enabled);
-    // //     assert(recipient == addrRecipient);
-
-    // //     donationHook.disableDonation(msg.sender);
-    // //     enabled = donationHook.donationEnabled(msg.sender);
-    // //     recipient = donationHook.donationRecipient(msg.sender);
-    // //     assert(!enabled);
-    // //     assert(recipient == address(0));
-    // // }
-
-    // function test_disableDonation() public {
-    //     // disableDonation(RECIPIENT, 20);
-    //     bool enabled = donationHook.donationEnabled();
-    //     address recipient = donationHook.donationRecipient();
-
-    //     console.log("test_disableDonation tx.origin %s", tx.origin);
-    //     uint percent = 20;
-    //     if (!enabled) {
-    //         console.log("Donation not enabled!");
-    //         console.log("Enabling donation");
-    //         donationHook.enableDonation(RECIPIENT, percent);
-    //     }
-
-    //     enabled = donationHook.donationEnabled();
-    //     recipient = donationHook.donationRecipient();
-    //     assert(enabled);
-    //     assert(recipient == RECIPIENT);
-
-    //     donationHook.disableDonation();
-    //     enabled = donationHook.donationEnabled();
-    //     recipient = donationHook.donationRecipient();
-    //     assert(!enabled);
-    //     assert(recipient == address(0));
-    // }
-
-    // function test_changeDonationSettings() public {
-    //     bool enabled = donationHook.donationEnabled();
-    //     address recipient = donationHook.donationRecipient();
-
-    //     // header("Before enabling donation");
-    //     // console.log("payee: %s", payee);
-    //     // console.log("enabled: %s", enabled);
-    //     // console.log("recipient: %s", recipient);
-    //     // console.log("testValue: %s", donationHook.testValue());
-    //     // console.log();
-        
-    //     assert(!enabled);
-    //     assert(recipient == address(0));
-
-    //     uint enabledPercent = 10;
-    //     donationHook.enableDonation(RECIPIENT, enabledPercent);
-
-    //     recipient = donationHook.donationRecipient(); 
-    //     enabled = donationHook.donationEnabled(); 
-    //     uint fetchedPercent = donationHook.donationPercent();
-
-    //     // println();
-    //     // header("After enabling donation");
-    //     // console.log("payee: %s", payee);
-    //     // console.log("enabled: %s", enabled);
-    //     // console.log("recipient: %s", recipient);
-    //     // console.log("testValue: %s", donationHook.testValue());
-
-    //     assert(enabled);
-    //     assert(recipient == RECIPIENT);
-    //     assert(fetchedPercent == enabledPercent);
-
-    //     enabledPercent = 30;
-    //     donationHook.enableDonation(RECIPIENT2, enabledPercent);
-
-    //     recipient = donationHook.donationRecipient();
-    //     enabled = donationHook.donationEnabled();
-    //     fetchedPercent = donationHook.donationPercent();
-
-    //     assert(enabled);
-    //     assert(recipient == RECIPIENT2);
-    //     assert(fetchedPercent == enabledPercent);
-    // }
-
-    // function test_transferFrom() public {
-    // }
-
-    function test_Donation() public {
-        // bool zeroForOne = true;
-        // PoolKey memory pool = PoolKey(
-        //     token0, token1, 3000, 60, IHooks(address(donationHook))
+        uint enabledPercent = 10;
+        // (bool success, bytes memory data) = address(donationHook).delegatecall(
+        //     abi.encodeWithSignature("enableDonation(address, uint)", RECIPIENT, enabledPercent)
         // );
-        // PoolKey memory pool = globalKey;
-        // bytes memory data = abi.encode(msg.sender);
+        donationHook.enableDonation(RECIPIENT, enabledPercent);
 
-        address recipient = address(0x01);
-
-        console.log("test_Donation caller / msg.sender: %s", msg.sender);
-
-        donationHook.enableDonation(RECIPIENT, 10); // recipient = 0x01, 10 percent
-        header("beforeSwap");
-        console.log("Address: %s, Balance token0: %s", msg.sender, token0.balanceOf(msg.sender));
-        console.log("Address: %s, Balance token1: %s", msg.sender, token1.balanceOf(msg.sender));
-        println();
-        console.log("Address: %s, Balance token0: %s", recipient, token0.balanceOf(recipient));
-        console.log("Address: %s, Balance token1: %s", recipient, token1.balanceOf(recipient));
-
-        // console.log("swapRouter address: %s", address(swapRouter));
-        // console.log("swapRouterNoChecks address: %s", address(swapRouterNoChecks));
-        // console.log("modifyLiquidityRouter address: %s", address(modifyLiquidityRouter));
-        // console.log("modifyLiquidityNoChecks address: %s", address(modifyLiquidityNoChecks));
-        // console.log("donateRouter address: %s", address(donateRouter));
-        // console.log("takeRouter address: %s", address(takeRouter));
-        // console.log("claimsRouter address: %s", address(claimsRouter));
-        // console.log("nestedActionRouter address: %s", address(nestedActionRouter));
-        // console.log("feeController address: %s", address(feeController));
-        // console.log("revertingFeeController address: %s", address(revertingFeeController));
-        // console.log("outOfBoundsFeeController address: %s", address(outOfBoundsFeeController));
-        // console.log("overflowFeeController address: %s", address(overflowFeeController));
-        // console.log("invalidReturnSizeFeeController address: %s", address(invalidReturnSizeFeeController));
-        // console.log("actionsRouter address: %s", address(actionsRouter));
-        console.log("manager address: %s", address(manager));
-
-        // swap method 1
-        // int256 amountToSwap = 10;
-        // PoolSwapTest.TestSettings memory testSettings =
-        //     PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false});
-        // IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
-        //     zeroForOne: true,
-        //     amountSpecified: -int256(amountToSwap),
-        //     sqrtPriceLimitX96: SQRT_PRICE_1_2
-        // });
-        // swapRouter.swap(pool, SWAP_PARAMS, testSettings, ZERO_BYTES);
-
-        // donationHook.approveSpending(Currency.unwrap(token0));
-        // donationHook.approveSpending(Currency.unwrap(token1));
-        // swap Method 2
-        PoolKey memory pool = globalKey;
-        bool zeroForOne = true;
-        int256 amountToSwap = 1 ether;
-        bytes memory data = abi.encode(msg.sender);
-        console.log("Calling swap...");
-        console.log("swapRouter address: %s", address(swapRouter));
-        swap(pool, zeroForOne, amountToSwap, data);
-        console.log("Back from swap...");
+        recipient = donationHook.donationRecipient();
+        enabled = donationHook.donationEnabled();
+        uint fetchedPercent = donationHook.donationPercent();
 
         println();
-        header(" afterSwap");
-        console.log("Address: %s, Balance token0: %s", msg.sender, token0.balanceOf(msg.sender));
-        console.log("Address: %s, Balance token1: %s", msg.sender, token1.balanceOf(msg.sender));
-        println();
-        console.log("Address: %s, Balance token0: %s", recipient, token0.balanceOf(recipient));
-        console.log("Address: %s, Balance token1: %s", recipient, token1.balanceOf(recipient));
+        header("After enabling donation");
+        payee = donationHook.donationPayee();
+        console.log("msg.sender: %s", msg.sender);
+        console.log("tx.origin: %s", tx.origin);
+        console.log("payee: %s", payee);
+        console.log("enabled: %s", enabled);
+        console.log("recipient: %s", recipient);
+
+        assert(enabled);
+        assert(recipient == RECIPIENT);
+        assert(fetchedPercent == enabledPercent);
+        vm.stopPrank();
     }
 
-    // function test_EnableDonation2() public {
-    //     // IPoolManager _manager, SwapRouterNoChecks _swapRouter, Deployers _deployers, PoolKey memory _pool
-    //     PoolKey memory pool = globalKey;
-    //     EOA account1 = new EOA(manager, swapRouterNoChecks, this, pool, donationHook);
+    function test_disableDonation() public {
+        // disableDonation(RECIPIENT, 20);
+        vm.startPrank(tx.origin);
 
-    //     address payee = account1.donationPayee();
-    //     address recipient = account1.donationRecipient();
-    //     bool enabled = account1.donationEnabled();
-    //     header("Before enabling donation");
-    //     console.log("payee: %s", payee);
-    //     console.log("enabled: %s", enabled);
-    //     console.log("recipient: %s", recipient);
-    //     println();
+        bool enabled = donationHook.donationEnabled();
+        address recipient = donationHook.donationRecipient();
 
-    //     uint percent = 10;       
-    //     account1.enableDonation(RECIPIENT, percent);
-    //     header(" After enabling donation");
-    //     payee = account1.donationPayee();
-    //     recipient = account1.donationRecipient();
-    //     enabled = account1.donationEnabled();
-    //     uint fetchedPercent = account1.donationPercent();
-    //     console.log("payee: %s", payee);
-    //     console.log("enabled: %s", enabled);
-    //     console.log("recipient: %s", recipient);
-    //     console.log("percent: %s", fetchedPercent);
-    //     println();
-    // }
-
-    function disableDonation(EOA account) public {
-        bool enabled = account.donationEnabled();
-        address recipient = account.donationRecipient();
-        address payee = account.donationPayee();
-
-        console.log("test_disableDonation msg.sender %s", payee);
+        separator();
+        println();
+        console.log("test_disableDonation tx.origin %s", tx.origin);
         uint percent = 20;
         if (!enabled) {
             console.log("Donation not enabled!");
             console.log("Enabling donation");
-            account.enableDonation(RECIPIENT, percent);
+            donationHook.enableDonation(RECIPIENT, percent);
         }
 
-        enabled = account.donationEnabled();
-        recipient = account.donationRecipient();
+        enabled = donationHook.donationEnabled();
+        recipient = donationHook.donationRecipient();
         assert(enabled);
         assert(recipient == RECIPIENT);
 
-        account.disableDonation();
-        enabled = account.donationEnabled();
-        recipient = account.donationRecipient();
+        donationHook.disableDonation();
+        enabled = donationHook.donationEnabled();
+        recipient = donationHook.donationRecipient();
         assert(!enabled);
         assert(recipient == address(0));
+        console.log("224 Donation disabled successful!");
+
+        vm.stopPrank();
     }
 
     function enableDonation(EOA account, address _recipient, uint _percent) internal {
@@ -407,7 +171,6 @@ contract DonationTest is Test, Deployers {
         console.log("msg.sender: %s", msgSender);
         console.log("payee: %s", payee);
         console.log("enabled: %s", enabled);
-        console.log("recipient: %s", recipient);
         println();
         
         assert(!enabled);
@@ -432,24 +195,71 @@ contract DonationTest is Test, Deployers {
         assert(fetchedPercent == enabledPercent);
     }
 
-    function test_DisableDonation() public {
-        PoolKey memory pool = globalKey;
-        EOA account1 = new EOA(manager, swapRouterNoChecks, this, pool, donationHook);
-        EOA account2 = new EOA(manager, swapRouterNoChecks, this, pool, donationHook);
-
-        disableDonation(account1);
-        disableDonation(account2);
+    function mint(address account, uint amount1, uint amount2) internal {
+        MockERC20 t0 = MockERC20(Currency.unwrap(token0));
+        MockERC20 t1 = MockERC20(Currency.unwrap(token1));
+        t0.mint(account, amount1 * 1 ether);
+        t1.mint(account, amount2 * 1 ether);
     }
 
-    function test_enableDonation() public {
-        PoolKey memory pool = globalKey;
-        EOA account1 = new EOA(manager, swapRouterNoChecks, this, pool, donationHook);
-        EOA account2 = new EOA(manager, swapRouterNoChecks, this, pool, donationHook);
+    function approve(EOA _account, MockERC20 _token, address _spender, uint _amount) internal returns (uint approvedAmount) {
+        _account.approveSpending(address(_token), _spender, _amount);
+        approvedAmount = _token.allowance(address(_account), _spender);
+    }
 
-        uint percent = 10;
-        enableDonation(account1, RECIPIENT, percent);
+    function approveAndShowAllowance(address _token, address _spender, address _owner, uint amount) internal {
+        vm.startPrank(_owner);
+        MockERC20 myToken = MockERC20(_token);
+        myToken.approve(_spender, amount);
+        uint approvedAllowance = myToken.allowance(tx.origin, _spender);
+        console.log("Approved allowance owner: %s spender: %s, amount: %s", tx.origin, _spender, approvedAllowance);
+        vm.stopPrank();
+    }
+
+    function approveAddressSpendingOnBehalfOf(address spender, address _owner) internal {
+        console.log("504 approveAddressSpendingOnBehalfOf, before startPrank: msg.sender: %s", msg.sender);
+        console.log("506 Spender: %s, Owner: %s", spender, _owner);
+
+        MockERC20 t0 = MockERC20(Currency.unwrap(token0));
+        MockERC20 t1 = MockERC20(Currency.unwrap(token1));
+        approveAndShowAllowance(address(t0), spender, _owner, type(uint).max);
+        approveAndShowAllowance(address(t1), spender, _owner, type(uint).max);
         
-        percent = 20;
-        enableDonation(account2, RECIPIENT2, percent);
+        console.log("approveAddressSpendingOnBehalfOf, after stopPrank: msg.sender: %s", msg.sender);
     }
+    function approveManagerSpendingOnBehalfOf(address _owner) internal {
+        console.log("approveManagerSpendingOnBehalfOf, before startPrank: msg.sender: %s", msg.sender);
+        approveAddressSpendingOnBehalfOf(address(manager), _owner);
+        console.log("approveManagerSpendingOnBehalfOf, after stopPrank: msg.sender: %s", msg.sender);
+    }
+
+    function test_Swap2() public {
+        vm.startPrank(tx.origin);
+
+        MockERC20 t0 = MockERC20(Currency.unwrap(token0));
+        MockERC20 t1 = MockERC20(Currency.unwrap(token1));
+
+        mint(tx.origin, 1000, 1000);
+
+        uint256 percent = 10;
+        donationHook.enableDonation(RECIPIENT, percent);
+        console.log("test_Swap2, 530 Donation enabled: %s", donationHook.donationEnabled(tx.origin));
+        t0.approve(address(donationHook), t0.balanceOf(tx.origin));
+        t1.approve(address(donationHook), t1.balanceOf(tx.origin));
+        
+        console.log("test_Swap2 537 approvals done");
+
+        vm.stopPrank();
+
+        PoolKey memory pool = globalKey;
+        bool zeroForOne = true;
+        int256 amountToSwap = 1 ether;
+        bytes memory data = abi.encode(msg.sender);
+        console.log("Calling swap...");
+        console.log("546 swapRouter address: %s", address(swapRouter));
+        swap(pool, zeroForOne, amountToSwap, data);
+        console.log("Back from swap...");
+        uint afterSwapBalance = t0.balanceOf(RECIPIENT);
+    }
+
 }
