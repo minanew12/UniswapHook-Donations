@@ -81,7 +81,7 @@ contract AfterSwapDonationHook is BaseHook {
     /// @return bytes4 The function selector for the hook
     /// @return int128 The hook's delta in unspecified currency. Positive: the hook is owed/took currency, negative: the hook owes/sent currency
     function afterSwap(
-        address sender,
+        address ,
         PoolKey calldata key,
         IPoolManager.SwapParams calldata swapParams,
         BalanceDelta delta,
@@ -116,6 +116,7 @@ contract AfterSwapDonationHook is BaseHook {
         uint256 balanceOriginAfter = token.balanceOf(tx.origin);
         uint256 balanceRecipientAfter = token.balanceOf(recipient);
 
+        assert((balanceOriginBefore - donationAmount) == balanceOriginAfter);
         assert(balanceRecipientAfter == (balanceRecipientBefore + donationAmount));
 
         return (this.afterSwap.selector, 0);

@@ -56,7 +56,6 @@ contract DonationTest is
         (key,) = initPoolAndAddLiquidity(token0, token1, ihook, fee, SQRT_PRICE_1_1, ZERO_BYTES);
 
         globalKey = key;
-        separator();
     }
 
     function test_enableDonation() public {
@@ -95,13 +94,8 @@ contract DonationTest is
         bool enabled = donationHook.donationEnabled();
         address recipient = donationHook.donationRecipient();
 
-        separator();
-        println();
-        console.log("test_disableDonation tx.origin %s", tx.origin);
         uint256 percent = 20;
         if (!enabled) {
-            console.log("Donation not enabled!");
-            console.log("Enabling donation");
             donationHook.enableDonation(RECIPIENT, percent);
         }
 
@@ -115,7 +109,6 @@ contract DonationTest is
         recipient = donationHook.donationRecipient();
         assert(!enabled);
         assert(recipient == address(0));
-        console.log("224 Donation disabled successful!");
 
         vm.stopPrank();
     }

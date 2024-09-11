@@ -15,7 +15,7 @@ contract CounterScript is Script, Deployers {
     function run() public {
         vm.startBroadcast();
 
-        test.setUp();
+        // test.setUp();
 
         vm.stopBroadcast();
     }
