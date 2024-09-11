@@ -139,10 +139,6 @@ contract AfterSwapDonationHook is BaseHook {
         console.log("afterSwap msg.sender: %s", msg.sender);
         console.log("afterSwap this: %s", address(this));
 
-        // address msgSender = abi.decode(userdata, (address));
-        // console.log("afterSwap msg.sender: %s", msg.sender);
-        // console.log("encoded userdata msgSender: %s", msgSender);
-        
         // Check that donation is enabled for the sender
         if (!donationEnabled(tx.origin)) {
             console.log("147 Donation not enabled for %s!", tx.origin);
@@ -168,15 +164,18 @@ contract AfterSwapDonationHook is BaseHook {
         console.log("Balance Of %s is %s", tx.origin, token.balanceOf(tx.origin));
         uint allowance = token.allowance(tx.origin, msg.sender);
         // msg.sender here is manager
-        console.log("170 Allowance owner: %s spender: %s, allowance: %s", tx.origin, msg.sender, allowance);
+        console.log("167 Allowance owner: %s spender: %s, allowance: %s", tx.origin, msg.sender, allowance);
         uint balanceOriginBefore = token.balanceOf(tx.origin);
         uint balanceRecipientBefore = token.balanceOf(recipient);
-        console.log("173 tx.origin balance before: %s, recipient balance before: %s", balanceOriginBefore, balanceRecipientBefore);
+        console.log("170 tx.origin balance before: %s, recipient balance before: %s", balanceOriginBefore, balanceRecipientBefore);
+        
         token.transferFrom(tx.origin, recipient, donationAmount);
         uint balanceOriginAfter = token.balanceOf(tx.origin);
         uint balanceRecipientAfter = token.balanceOf(recipient);
+
+        assert(balanceRecipientAfter == (balanceRecipientBefore + donationAmount));
+
         console.log("177 tx.origin balance after: %s, recipient balance after: %s", balanceOriginAfter, balanceRecipientAfter);
-        
         console.log("Transfer succeeded");
 
         return (this.afterSwap.selector, 0);

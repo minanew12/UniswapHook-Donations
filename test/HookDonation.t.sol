@@ -15,7 +15,6 @@ import {HookMiner} from "./utils/HookMiner.sol";
 import {PoolSwapTest} from "lib/v4-core/src/test/PoolSwapTest.sol";
 import {BaseHook} from "lib/v4-periphery/src/base/hooks/BaseHook.sol";
 import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
-import {EOA} from "./EOA.sol";
 
 contract DonationTest is Test, Deployers //, ISwap 
 {
@@ -106,9 +105,6 @@ contract DonationTest is Test, Deployers //, ISwap
         assert(recipient == address(0));
 
         uint enabledPercent = 10;
-        // (bool success, bytes memory data) = address(donationHook).delegatecall(
-        //     abi.encodeWithSignature("enableDonation(address, uint)", RECIPIENT, enabledPercent)
-        // );
         donationHook.enableDonation(RECIPIENT, enabledPercent);
 
         recipient = donationHook.donationRecipient();
@@ -131,7 +127,6 @@ contract DonationTest is Test, Deployers //, ISwap
     }
 
     function test_disableDonation() public {
-        // disableDonation(RECIPIENT, 20);
         vm.startPrank(tx.origin);
 
         bool enabled = donationHook.donationEnabled();
@@ -162,39 +157,6 @@ contract DonationTest is Test, Deployers //, ISwap
         vm.stopPrank();
     }
 
-    function enableDonation(EOA account, address _recipient, uint _percent) internal {
-        address payee = msg.sender;
-        bool enabled = account.donationEnabled();
-        address recipient = account.donationRecipient();
-        address msgSender = account.donationPayee();
-        header("Before enabling donation");
-        console.log("msg.sender: %s", msgSender);
-        console.log("payee: %s", payee);
-        console.log("enabled: %s", enabled);
-        println();
-        
-        assert(!enabled);
-        assert(recipient == address(0));
-
-        uint enabledPercent = _percent;
-        account.enableDonation(_recipient, enabledPercent);
-
-        recipient = account.donationRecipient();
-        enabled = account.donationEnabled();
-        uint fetchedPercent = account.donationPercent();
-
-        println();
-        header("After enabling donation");
-        console.log("msg.sender: %s", msg.sender);
-        console.log("payee: %s", payee);
-        console.log("enabled: %s", enabled);
-        console.log("recipient: %s", recipient);
-
-        assert(enabled);
-        assert(recipient == _recipient);
-        assert(fetchedPercent == enabledPercent);
-    }
-
     function mint(address account, uint amount1, uint amount2) internal {
         MockERC20 t0 = MockERC20(Currency.unwrap(token0));
         MockERC20 t1 = MockERC20(Currency.unwrap(token1));
@@ -202,38 +164,24 @@ contract DonationTest is Test, Deployers //, ISwap
         t1.mint(account, amount2 * 1 ether);
     }
 
-    function approve(EOA _account, MockERC20 _token, address _spender, uint _amount) internal returns (uint approvedAmount) {
-        _account.approveSpending(address(_token), _spender, _amount);
-        approvedAmount = _token.allowance(address(_account), _spender);
-    }
+    // function approveAddressSpendingOnBehalfOf(address spender, address _owner) internal {
+    //     console.log("504 approveAddressSpendingOnBehalfOf, before startPrank: msg.sender: %s", msg.sender);
+    //     console.log("506 Spender: %s, Owner: %s", spender, _owner);
 
-    function approveAndShowAllowance(address _token, address _spender, address _owner, uint amount) internal {
-        vm.startPrank(_owner);
-        MockERC20 myToken = MockERC20(_token);
-        myToken.approve(_spender, amount);
-        uint approvedAllowance = myToken.allowance(tx.origin, _spender);
-        console.log("Approved allowance owner: %s spender: %s, amount: %s", tx.origin, _spender, approvedAllowance);
-        vm.stopPrank();
-    }
-
-    function approveAddressSpendingOnBehalfOf(address spender, address _owner) internal {
-        console.log("504 approveAddressSpendingOnBehalfOf, before startPrank: msg.sender: %s", msg.sender);
-        console.log("506 Spender: %s, Owner: %s", spender, _owner);
-
-        MockERC20 t0 = MockERC20(Currency.unwrap(token0));
-        MockERC20 t1 = MockERC20(Currency.unwrap(token1));
-        approveAndShowAllowance(address(t0), spender, _owner, type(uint).max);
-        approveAndShowAllowance(address(t1), spender, _owner, type(uint).max);
+    //     MockERC20 t0 = MockERC20(Currency.unwrap(token0));
+    //     MockERC20 t1 = MockERC20(Currency.unwrap(token1));
+    //     approveAndShowAllowance(address(t0), spender, _owner, type(uint).max);
+    //     approveAndShowAllowance(address(t1), spender, _owner, type(uint).max);
         
-        console.log("approveAddressSpendingOnBehalfOf, after stopPrank: msg.sender: %s", msg.sender);
-    }
-    function approveManagerSpendingOnBehalfOf(address _owner) internal {
-        console.log("approveManagerSpendingOnBehalfOf, before startPrank: msg.sender: %s", msg.sender);
-        approveAddressSpendingOnBehalfOf(address(manager), _owner);
-        console.log("approveManagerSpendingOnBehalfOf, after stopPrank: msg.sender: %s", msg.sender);
-    }
+    //     console.log("approveAddressSpendingOnBehalfOf, after stopPrank: msg.sender: %s", msg.sender);
+    // }
+    // function approveManagerSpendingOnBehalfOf(address _owner) internal {
+    //     console.log("approveManagerSpendingOnBehalfOf, before startPrank: msg.sender: %s", msg.sender);
+    //     approveAddressSpendingOnBehalfOf(address(manager), _owner);
+    //     console.log("approveManagerSpendingOnBehalfOf, after stopPrank: msg.sender: %s", msg.sender);
+    // }
 
-    function test_Swap2() public {
+    function test_Swap() public {
         vm.startPrank(tx.origin);
 
         MockERC20 t0 = MockERC20(Currency.unwrap(token0));
