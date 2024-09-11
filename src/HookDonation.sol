@@ -89,11 +89,6 @@ contract AfterSwapDonationHook is BaseHook {
     ) external override returns (bytes4, int128) {
         // require(msg.sender == address(poolManager), "Unauthorized caller");
 
-        console.log("afterSwap tx.origin %s", tx.origin);
-        console.log("afterSwap parameter sender: %s", sender);
-        console.log("afterSwap msg.sender: %s", msg.sender);
-        console.log("afterSwap this: %s", address(this));
-
         // Check that donation is enabled for the tx.origin, otherwise, return early
         if (!donationEnabled(tx.origin)) {
             return (this.afterSwap.selector, 0);
