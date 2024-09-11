@@ -46,17 +46,6 @@ contract DonationTest is Test, Deployers {
         return value ? "true": "false";
     }
 
-    function beforeTestSetup(
-        bytes4 // testSelector
-    ) public view returns (bytes[] memory ) { // beforeTestCalldata
-        // if (testSelector == this.testC.selector) {
-        //     beforeTestCalldata = new bytes[](2);
-        //     beforeTestCalldata[0] = abi.encodePacked(this.testA.selector);
-        //     beforeTestCalldata[1] = abi.encodeWithSignature("setB(uint256)", 1);
-        // }
-        console.log("beforeTestSetup msg.sender: %s, tx.origin: %s, this: %s", msg.sender, tx.origin, address(this));
-    }
-    
     function setUp() public {
         console.log("setUp tx.origin: %s, msg.sender: %s", tx.origin, msg.sender);
         deployFreshManagerAndRouters();
