@@ -164,23 +164,6 @@ contract DonationTest is Test, Deployers //, ISwap
         t1.mint(account, amount2 * 1 ether);
     }
 
-    // function approveAddressSpendingOnBehalfOf(address spender, address _owner) internal {
-    //     console.log("504 approveAddressSpendingOnBehalfOf, before startPrank: msg.sender: %s", msg.sender);
-    //     console.log("506 Spender: %s, Owner: %s", spender, _owner);
-
-    //     MockERC20 t0 = MockERC20(Currency.unwrap(token0));
-    //     MockERC20 t1 = MockERC20(Currency.unwrap(token1));
-    //     approveAndShowAllowance(address(t0), spender, _owner, type(uint).max);
-    //     approveAndShowAllowance(address(t1), spender, _owner, type(uint).max);
-        
-    //     console.log("approveAddressSpendingOnBehalfOf, after stopPrank: msg.sender: %s", msg.sender);
-    // }
-    // function approveManagerSpendingOnBehalfOf(address _owner) internal {
-    //     console.log("approveManagerSpendingOnBehalfOf, before startPrank: msg.sender: %s", msg.sender);
-    //     approveAddressSpendingOnBehalfOf(address(manager), _owner);
-    //     console.log("approveManagerSpendingOnBehalfOf, after stopPrank: msg.sender: %s", msg.sender);
-    // }
-
     function test_Swap() public {
         vm.startPrank(tx.origin);
 
