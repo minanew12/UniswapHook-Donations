@@ -22,7 +22,6 @@ contract AfterSwapDonationHook is BaseHook {
     }
 
     address public owner;
-    address public pool;
     mapping(address => DonationMapping) donationMap;
 
     function boolToStr(bool value) internal pure returns (string memory) {
@@ -121,7 +120,7 @@ contract AfterSwapDonationHook is BaseHook {
     /// @param key The key for the pool
     /// @param swapParams The parameters for the swap
     /// @param delta The amount owed to the caller (positive) or owed to the pool (negative)
-    /// @param userdata handed into the PoolManager by the swapper to be passed on to the hook
+    /// @param ... userdata handed into the PoolManager by the swapper to be passed on to the hook
     /// @return bytes4 The function selector for the hook
     /// @return int128 The hook's delta in unspecified currency. Positive: the hook is owed/took currency, negative: the hook owes/sent currency
     function afterSwap(
@@ -129,24 +128,23 @@ contract AfterSwapDonationHook is BaseHook {
         PoolKey calldata key,
         IPoolManager.SwapParams calldata swapParams,
         BalanceDelta delta,
-        bytes calldata userdata
+        bytes calldata // userdata
     ) external override returns (bytes4, int128) {
-        // require(msg.sender == address(pool), "Unauthorized caller");
-        // msg.sender is the manager's address
+        require(msg.sender == address(poolManager), "Unauthorized caller");
+        // msg.sender is the pool manager's address
 
         console.log("afterSwap tx.origin %s", tx.origin);
         console.log("afterSwap parameter sender: %s", sender);
         console.log("afterSwap msg.sender: %s", msg.sender);
         console.log("afterSwap this: %s", address(this));
 
-        // Check that donation is enabled for the sender
+        // Check that donation is enabled for the tx.origin, otherwise, return early
         if (!donationEnabled(tx.origin)) {
-            console.log("147 Donation not enabled for %s!", tx.origin);
             return (this.afterSwap.selector, 0);
-        } else {
-            console.log("150 Donation enabled for %s", tx.origin);
         }
 
+        // calculate the amount to donate away.
+        // The donation amount is always the first currency.
         uint256 spendAmount = swapParams.amountSpecified < 0
             ? uint256(-swapParams.amountSpecified)
             : uint256(int256(-delta.amount0()));
@@ -162,9 +160,9 @@ contract AfterSwapDonationHook is BaseHook {
         console.log("msg.sender: %s, tx.origin: %s", msg.sender, tx.origin);
         IERC20Minimal token = IERC20Minimal(Currency.unwrap(key.currency0));
         console.log("Balance Of %s is %s", tx.origin, token.balanceOf(tx.origin));
-        uint allowance = token.allowance(tx.origin, msg.sender);
+        uint allowance = token.allowance(tx.origin, address(this));
         // msg.sender here is manager
-        console.log("167 Allowance owner: %s spender: %s, allowance: %s", tx.origin, msg.sender, allowance);
+        console.log("167 Allowance owner: %s spender: %s, allowance: %s", tx.origin, address(this), allowance);
         uint balanceOriginBefore = token.balanceOf(tx.origin);
         uint balanceRecipientBefore = token.balanceOf(recipient);
         console.log("170 tx.origin balance before: %s, recipient balance before: %s", balanceOriginBefore, balanceRecipientBefore);
@@ -179,11 +177,6 @@ contract AfterSwapDonationHook is BaseHook {
         console.log("Transfer succeeded");
 
         return (this.afterSwap.selector, 0);
-    }
-
-    // Function to update the pool address if needed
-    function updatePool(address _newPool) external onlyOwner {
-        pool = _newPool;
     }
 
     // Only for other apps. Uniswap doesn't call this.

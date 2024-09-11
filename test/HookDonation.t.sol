@@ -23,7 +23,7 @@ contract DonationTest is Test, Deployers //, ISwap
     AfterSwapDonationHook donationHook;
     
     // Mock token
-    MockERC20 token;
+    // MockERC20 token;
 
     // The two currencies (tokens) from the pool
     Currency token0 = Currency.wrap(address(0));
@@ -86,7 +86,7 @@ contract DonationTest is Test, Deployers //, ISwap
 
     function test_enableDonation() public {
         address payee = tx.origin;
-        vm.startPrank(payee);
+        vm.startPrank(payee); // Make all calls from here to vm.stopPrank() appear to have msg.sender value of payee
 
         bool enabled = donationHook.donationEnabled();
         address recipient = donationHook.donationRecipient();
@@ -98,15 +98,18 @@ contract DonationTest is Test, Deployers //, ISwap
         console.log("payee: %s", payee);
         console.log("enabled: %s", enabled);
         console.log("recipient: %s", recipient);
-        // console.log("testValue: %s", donationHook.testValue());
         println();
         
+        // First, check that the donation is not enabled
         assert(!enabled);
         assert(recipient == address(0));
 
+        // Now, enable the donation, specifying that 10% 
+        // always goes to the address specified in RECIPIENT
         uint enabledPercent = 10;
         donationHook.enableDonation(RECIPIENT, enabledPercent);
 
+        // Now, verify that the recipent, the enabled status and percentage is correctly set
         recipient = donationHook.donationRecipient();
         enabled = donationHook.donationEnabled();
         uint fetchedPercent = donationHook.donationPercent();
@@ -165,6 +168,7 @@ contract DonationTest is Test, Deployers //, ISwap
     }
 
     function test_Swap() public {
+        // 
         vm.startPrank(tx.origin);
 
         MockERC20 t0 = MockERC20(Currency.unwrap(token0));
@@ -182,15 +186,12 @@ contract DonationTest is Test, Deployers //, ISwap
 
         vm.stopPrank();
 
+        // Setup the swap and do it
         PoolKey memory pool = globalKey;
         bool zeroForOne = true;
         int256 amountToSwap = 1 ether;
         bytes memory data = abi.encode(msg.sender);
-        console.log("Calling swap...");
-        console.log("546 swapRouter address: %s", address(swapRouter));
         swap(pool, zeroForOne, amountToSwap, data);
-        console.log("Back from swap...");
-        uint afterSwapBalance = t0.balanceOf(RECIPIENT);
     }
 
 }
