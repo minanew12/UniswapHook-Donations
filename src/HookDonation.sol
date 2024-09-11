@@ -6,39 +6,54 @@ import {PoolKey} from "lib/v4-periphery/lib/v4-core/src/types/PoolKey.sol";
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {BalanceDelta} from "lib/v4-periphery/lib/v4-core/src/types/BalanceDelta.sol";
 import {Hooks} from "lib/v4-periphery/lib/v4-core/src/libraries/Hooks.sol";
-import {CurrencyLibrary, Currency} from "v4-core/types/Currency.sol";
+import {CurrencyLibrary, Currency} from "lib/v4-periphery/lib/v4-core/src/types/Currency.sol";
+import {ERC20} from "lib/v4-core/lib/solmate/src/tokens/ERC20.sol";
+import {IERC20Minimal} from "lib/v4-core/src/interfaces/external/IERC20Minimal.sol";
 
 // For checking expected values
 import "lib/v4-periphery/lib/v4-core/lib/forge-std/src/console.sol";
 
 contract AfterSwapDonationHook is BaseHook {
     using CurrencyLibrary for Currency;
+
     struct DonationMapping {
         address payable recipient;
         uint256 percent; // how much to donate
     }
+
     address public owner;
     address public pool;
     mapping(address => DonationMapping) donationMap;
-    uint public testValue; 
 
+    function boolToStr(bool value) internal pure returns (string memory) {
+        return value ? "true": "false";
+    }
+    
 // -------------- begin donation associated functions ---------------
     function disableDonation() public {
         // Reset the value to the default value.
+        console.log("function disableDonation()");
+        console.log("disableDonation msg.sender: %s", msg.sender);
         delete donationMap[msg.sender];
     }
 
     function enableDonation(address recipient, uint256 percent) public {
-        console.log("enableDonation msg.sender: %s", msg.sender);
-        console.log("enableDonation recipient: %s", recipient);
-        console.log("enableDonation percent: %s", percent);
+        // console.log("enableDonation msg.sender: %s", msg.sender);
+        // console.log("enableDonation recipient: %s", recipient);
+        // console.log("enableDonation percent: %s", percent);
 
         // DonationMapping memory local = DonationMapping(payable(recipient), percent);
         // local.recipient = payable(recipient);
         // local.percent   = percent;
         // donationMap[msg.sender] = local;
 
+        // console.log("enableDonation function");
+        // console.log("Enabling donation for msg.sender %s to recipient %s", msg.sender, recipient);
+        // donationMap[msg.sender] = DonationMapping(payable(recipient), percent);
+        console.log("enableDonation(address recipient, uint256 percent)");
+        console.log("enableDonation msg.sender %s", msg.sender);
         donationMap[msg.sender] = DonationMapping(payable(recipient), percent);
+
         // DonationMapping memory local = donationMap[msg.sender];
         // console.log("after enableDonation msg.sender: %s", msg.sender);
         // console.log("after enableDonation recipient: %s", local.recipient);
@@ -46,33 +61,42 @@ contract AfterSwapDonationHook is BaseHook {
 
         // donationMap[msg.sender].recipient = payable(recipient);
         // donationMap[msg.sender].percent = percent;
-
-        testValue++;
     }
 
-    // function donationDetails() public view returns (DonationMapping memory) {
-    //     return donationMap[msg.sender];
+    // function enableDonation(address recipient, uint256 percent, address token0, address token1) public {
+    //     enableDonation(recipient, percent);
+    //     approveSpending(token0);
+    //     approveSpending(token1);
     // }
 
     // the following should all have internal view, not public
     // but have been changed to public view for testing
 
     function donationEnabled() public view returns (bool) {
-        return (donationMap[msg.sender].recipient != payable(0x0));
+        bool result = donationMap[msg.sender].recipient != payable(0x0);
+        console.log("donation enabled: %s for %s", boolToStr(result), msg.sender);
+        return result;
+    }
+
+    function donationPayee() public view returns (address) {
+        return msg.sender;
     }
 
     function donationPercent() public view returns (uint256) {
-        return (donationMap[msg.sender].percent);
+        return donationMap[msg.sender].percent;
     }
 
     function donationRecipient() public view returns (address) {
-        return (donationMap[msg.sender].recipient);
+        return donationMap[msg.sender].recipient;
     }
+
 // -------------- end donation associated functions ---------------
 
     constructor(IPoolManager _poolManager) BaseHook(_poolManager) {
         owner = msg.sender;
-        testValue = 1; // for testing
+        console.log("Owner: %s", owner);
+        console.log("Pool manager: %s", address(poolManager));
+        // testValue = 1; // for testing
     }
 
     // Modifier to restrict access to the owner
@@ -82,34 +106,55 @@ contract AfterSwapDonationHook is BaseHook {
     }
 
     /// @notice The hook called after a swap
-    /// @param ...sender The initial msg.sender for the swap call
+    /// @param ...manager The initial msg.sender for the swap call
     /// @param key The key for the pool
     /// @param swapParams The parameters for the swap
     /// @param delta The amount owed to the caller (positive) or owed to the pool (negative)
-    /// @param ...Arbitrary data handed into the PoolManager by the swapper to be passed on to the hook
+    /// @param userdata handed into the PoolManager by the swapper to be passed on to the hook
     /// @return bytes4 The function selector for the hook
     /// @return int128 The hook's delta in unspecified currency. Positive: the hook is owed/took currency, negative: the hook owes/sent currency
     function afterSwap(
-        address, // sender,
+        address sender,
         PoolKey calldata key,
         IPoolManager.SwapParams calldata swapParams,
         BalanceDelta delta,
-        bytes calldata
+        bytes calldata userdata
     ) external override returns (bytes4, int128) {
-        require(msg.sender == address(pool), "Unauthorized caller");
+        // require(msg.sender == address(pool), "Unauthorized caller");
+        // msg.sender is the manager's address
+
+        console.log("afterSwap tx.origin %s", tx.origin);
+        console.log("afterSwap parameter sender: %s", sender);
+        address msgSender = abi.decode(userdata, (address));
+        console.log("afterSwap msg.sender: %s", msg.sender);
+        console.log("encoded userdata msgSender: %s", msgSender);
         
         // Check that donation is enabled for the sender
-        if (!donationEnabled())
+        if (!donationEnabled()) {
+            console.log("donation not enabled!");
             return (this.afterSwap.selector, 0);
-        
+        }
         uint256 spendAmount = swapParams.amountSpecified < 0
             ? uint256(-swapParams.amountSpecified)
             : uint256(int256(-delta.amount0()));
-
-        uint256 donationAmount = (spendAmount * donationPercent()) / 100;
+        uint256 percent = donationPercent();
+        uint256 donationAmount = (spendAmount * percent) / 100;
+        console.log("Donation percent: %s", percent);
+        console.log("   spendAmount: %s", spendAmount);
+        console.log("donationAmount: %s", donationAmount);
         address recipient = donationRecipient();
+        console.log("recipient: %s", recipient);
 
-        key.currency0.transfer(recipient, donationAmount);
+        console.log("Transferring now");
+        console.log("msg.sender: %s, tx.origin: %s", msg.sender, tx.origin);
+        IERC20Minimal token = IERC20Minimal(Currency.unwrap(key.currency0));
+        console.log("Balance Of %s is %s", tx.origin, token.balanceOf(tx.origin));
+        uint allowance = token.allowance(tx.origin, msg.sender);
+        // msg.sender here is manager
+        console.log("156 Allowance owner: %s spender: %s, allowance: %s", tx.origin, msg.sender, allowance);
+        // token.transferFrom(tx.origin, recipient, donationAmount);
+        // token.allowance()
+        console.log("Transfer succeeded");
 
         return (this.afterSwap.selector, 0);
     }
