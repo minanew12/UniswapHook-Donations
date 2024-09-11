@@ -10,9 +10,6 @@ import {CurrencyLibrary, Currency} from "lib/v4-periphery/lib/v4-core/src/types/
 import {ERC20} from "lib/v4-core/lib/solmate/src/tokens/ERC20.sol";
 import {IERC20Minimal} from "lib/v4-core/src/interfaces/external/IERC20Minimal.sol";
 
-// For checking expected values
-import "lib/v4-periphery/lib/v4-core/lib/forge-std/src/console.sol";
-
 contract AfterSwapDonationHook is BaseHook {
     using CurrencyLibrary for Currency;
 
@@ -33,14 +30,7 @@ contract AfterSwapDonationHook is BaseHook {
 
     /// Enables donation to the specified recipient, with the given percentage
     function enableDonation(address recipient, uint256 percent) public {
-        console.log("enableDonation tx.origin: %s", tx.origin);
-        console.log("enableDonation msg.sender: %s", msg.sender);
-        console.log("enableDonation recipient: %s", recipient);
-        console.log("enableDonation percent: %s", percent);
-
-        console.log("enableDonation(address recipient, uint256 percent)");
         donationMap[tx.origin] = DonationMapping(payable(recipient), percent);
-
     }
 
     // the following should all have internal view, not public
@@ -79,18 +69,6 @@ contract AfterSwapDonationHook is BaseHook {
         owner = msg.sender;
     }
 
-    // Modifier to restrict access to the owner
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not authorized");
-        _;
-    }
-
-    /// Modifier to restrict access only to pool manager
-    modifier onlyPoolManager() {
-        require(msg.sender == address(poolManager), "Unauthorized caller");
-        _;
-    }
-
     /// @notice The hook called after a swap
     /// @param ...manager The initial msg.sender for the swap call
     /// @param key The key for the pool
@@ -105,9 +83,8 @@ contract AfterSwapDonationHook is BaseHook {
         IPoolManager.SwapParams calldata swapParams,
         BalanceDelta delta,
         bytes calldata // userdata
-    ) external override returns (bytes4, int128) onlyPoolManager {
+    ) external override returns (bytes4, int128) {
         // require(msg.sender == address(poolManager), "Unauthorized caller");
-        // msg.sender is the pool manager's address
 
         console.log("afterSwap tx.origin %s", tx.origin);
         console.log("afterSwap parameter sender: %s", sender);
@@ -126,31 +103,23 @@ contract AfterSwapDonationHook is BaseHook {
             : uint256(int256(-delta.amount0()));
         uint256 percent = donationPercent(tx.origin);
         uint256 donationAmount = (spendAmount * percent) / 100;
-        console.log("158 Donation percent: %s", percent);
-        console.log("   spendAmount: %s", spendAmount);
-        console.log("donationAmount: %s", donationAmount);
         address recipient = donationRecipient(tx.origin);
-        console.log("recipient: %s", recipient);
 
-        console.log("Transferring now");
-        console.log("msg.sender: %s, tx.origin: %s", msg.sender, tx.origin);
         IERC20Minimal token = IERC20Minimal(Currency.unwrap(key.currency0));
-        console.log("Balance Of %s is %s", tx.origin, token.balanceOf(tx.origin));
         uint allowance = token.allowance(tx.origin, address(this));
-        // msg.sender here is manager
-        console.log("167 Allowance owner: %s spender: %s, allowance: %s", tx.origin, address(this), allowance);
+        assert(allowance > 0); // check that we're allowed to spend on behalf of tx.origin
+
+        // Track the balance before the transfer
         uint balanceOriginBefore = token.balanceOf(tx.origin);
         uint balanceRecipientBefore = token.balanceOf(recipient);
-        console.log("170 tx.origin balance before: %s, recipient balance before: %s", balanceOriginBefore, balanceRecipientBefore);
         
         token.transferFrom(tx.origin, recipient, donationAmount);
+
+        // Track the balance after the transfer
         uint balanceOriginAfter = token.balanceOf(tx.origin);
         uint balanceRecipientAfter = token.balanceOf(recipient);
 
         assert(balanceRecipientAfter == (balanceRecipientBefore + donationAmount));
-
-        console.log("177 tx.origin balance after: %s, recipient balance after: %s", balanceOriginAfter, balanceRecipientAfter);
-        console.log("Transfer succeeded");
 
         return (this.afterSwap.selector, 0);
     }

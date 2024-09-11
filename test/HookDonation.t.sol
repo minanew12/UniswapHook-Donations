@@ -35,7 +35,6 @@ contract DonationTest is Test, Deployers //, ISwap
     event HookAddress(address indexed hookAddress);
 
     function setUp() public {
-        console.log("setUp tx.origin: %s, msg.sender: %s", tx.origin, msg.sender);
         deployFreshManagerAndRouters();
         (currency0, currency1) = deployMintAndApprove2Currencies();
         (token0, token1) = (currency0, currency1);
@@ -53,9 +52,6 @@ contract DonationTest is Test, Deployers //, ISwap
         );
         emit HookAddress(hookAddress);
         donationHook = AfterSwapDonationHook(hookAddress);
-        console.log("setUp Hook Address: ", hookAddress);
-        console.log("donation Hook: ", address(donationHook));
-        console.log("setUp sender: %s", msg.sender);
 
         IHooks ihook = IHooks(address(donationHook));
 
@@ -67,19 +63,6 @@ contract DonationTest is Test, Deployers //, ISwap
         separator();
     }
 
-    function separator() internal view {
-        console.log("--------------------------------------------------------------------------------");
-    }
-    
-    function println() internal view {
-        console.log();
-    }
-
-    function header(string memory _header) internal view {
-        console.log(_header);
-        separator();
-    }
-
     function test_enableDonation() public {
         address payee = tx.origin;
         vm.startPrank(payee); // Make all calls from here to vm.stopPrank() appear to have msg.sender value of payee
@@ -87,14 +70,7 @@ contract DonationTest is Test, Deployers //, ISwap
         bool enabled = donationHook.donationEnabled();
         address recipient = donationHook.donationRecipient();
 
-        println();
-        header("Before enabling donation");
         payee = donationHook.donationPayee();
-        console.log("msg.sender: %s", msg.sender);
-        console.log("payee: %s", payee);
-        console.log("enabled: %s", enabled);
-        console.log("recipient: %s", recipient);
-        println();
         
         // First, check that the donation is not enabled
         assert(!enabled);
@@ -110,15 +86,7 @@ contract DonationTest is Test, Deployers //, ISwap
         enabled = donationHook.donationEnabled();
         uint fetchedPercent = donationHook.donationPercent();
 
-        println();
-        header("After enabling donation");
         payee = donationHook.donationPayee();
-        console.log("msg.sender: %s", msg.sender);
-        console.log("tx.origin: %s", tx.origin);
-        console.log("payee: %s", payee);
-        console.log("enabled: %s", enabled);
-        console.log("recipient: %s", recipient);
-
         assert(enabled);
         assert(recipient == RECIPIENT);
         assert(fetchedPercent == enabledPercent);
@@ -173,12 +141,11 @@ contract DonationTest is Test, Deployers //, ISwap
         mint(tx.origin, 1000, 1000);
 
         uint256 percent = 10;
-        donationHook.enableDonation(RECIPIENT, percent);
-        console.log("test_Swap2, 530 Donation enabled: %s", donationHook.donationEnabled(tx.origin));
+        donationHook.enableDonation(RECIPIENT, percent); 
+
+        // Approve this contract to spend on behalf of tx.origin, which is the user / EOA
         t0.approve(address(donationHook), t0.balanceOf(tx.origin));
         t1.approve(address(donationHook), t1.balanceOf(tx.origin));
-        
-        console.log("test_Swap2 537 approvals done");
 
         vm.stopPrank();
 
