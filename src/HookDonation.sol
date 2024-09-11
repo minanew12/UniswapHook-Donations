@@ -21,7 +21,7 @@ contract AfterSwapDonationHook is BaseHook {
     address public owner;
     mapping(address => DonationMapping) donationMap;
 
-// -------------- begin donation associated functions ---------------
+    // -------------- begin donation associated functions ---------------
     /// Disables donation for msg.sender
     function disableDonation() public {
         // Reset the value to the default value.
@@ -40,6 +40,7 @@ contract AfterSwapDonationHook is BaseHook {
         bool result = donationMap[addr].recipient != payable(0x0);
         return result;
     }
+
     function donationEnabled() public view returns (bool) {
         bool result = donationEnabled(msg.sender);
         return result;
@@ -52,6 +53,7 @@ contract AfterSwapDonationHook is BaseHook {
     function donationPercent(address addr) public view returns (uint256) {
         return donationMap[addr].percent;
     }
+
     function donationPercent() public view returns (uint256) {
         return donationPercent(msg.sender);
     }
@@ -59,11 +61,12 @@ contract AfterSwapDonationHook is BaseHook {
     function donationRecipient(address addr) public view returns (address) {
         return donationMap[addr].recipient;
     }
+
     function donationRecipient() public view returns (address) {
         return donationRecipient(msg.sender);
     }
 
-// -------------- end donation associated functions ---------------
+    // -------------- end donation associated functions ---------------
 
     constructor(IPoolManager _poolManager) BaseHook(_poolManager) {
         owner = msg.sender;
@@ -98,26 +101,25 @@ contract AfterSwapDonationHook is BaseHook {
 
         // calculate the amount to donate away.
         // The donation amount is always the first currency.
-        uint256 spendAmount = swapParams.amountSpecified < 0
-            ? uint256(-swapParams.amountSpecified)
-            : uint256(int256(-delta.amount0()));
+        uint256 spendAmount =
+            swapParams.amountSpecified < 0 ? uint256(-swapParams.amountSpecified) : uint256(int256(-delta.amount0()));
         uint256 percent = donationPercent(tx.origin);
         uint256 donationAmount = (spendAmount * percent) / 100;
         address recipient = donationRecipient(tx.origin);
 
         IERC20Minimal token = IERC20Minimal(Currency.unwrap(key.currency0));
-        uint allowance = token.allowance(tx.origin, address(this));
+        uint256 allowance = token.allowance(tx.origin, address(this));
         assert(allowance > 0); // check that we're allowed to spend on behalf of tx.origin
 
         // Track the balance before the transfer
-        uint balanceOriginBefore = token.balanceOf(tx.origin);
-        uint balanceRecipientBefore = token.balanceOf(recipient);
-        
+        uint256 balanceOriginBefore = token.balanceOf(tx.origin);
+        uint256 balanceRecipientBefore = token.balanceOf(recipient);
+
         token.transferFrom(tx.origin, recipient, donationAmount);
 
         // Track the balance after the transfer
-        uint balanceOriginAfter = token.balanceOf(tx.origin);
-        uint balanceRecipientAfter = token.balanceOf(recipient);
+        uint256 balanceOriginAfter = token.balanceOf(tx.origin);
+        uint256 balanceRecipientAfter = token.balanceOf(recipient);
 
         assert(balanceRecipientAfter == (balanceRecipientBefore + donationAmount));
 
@@ -126,23 +128,21 @@ contract AfterSwapDonationHook is BaseHook {
 
     // Only for other apps. Uniswap doesn't call this.
     function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
-        return
-            Hooks.Permissions({
-                beforeInitialize: false,
-                afterInitialize: false,
-                beforeAddLiquidity: false,
-                beforeRemoveLiquidity: false,
-                afterAddLiquidity: false,
-                afterRemoveLiquidity: false,
-                beforeSwap: false,
-                afterSwap: true,
-                beforeDonate: false,
-                afterDonate: false,
-                beforeSwapReturnDelta: false,
-                afterSwapReturnDelta: false,
-                afterAddLiquidityReturnDelta: false,
-                afterRemoveLiquidityReturnDelta: false
-            });
+        return Hooks.Permissions({
+            beforeInitialize: false,
+            afterInitialize: false,
+            beforeAddLiquidity: false,
+            beforeRemoveLiquidity: false,
+            afterAddLiquidity: false,
+            afterRemoveLiquidity: false,
+            beforeSwap: false,
+            afterSwap: true,
+            beforeDonate: false,
+            afterDonate: false,
+            beforeSwapReturnDelta: false,
+            afterSwapReturnDelta: false,
+            afterAddLiquidityReturnDelta: false,
+            afterRemoveLiquidityReturnDelta: false
+        });
     }
-
 }

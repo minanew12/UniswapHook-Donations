@@ -29,13 +29,10 @@ library HookMiner {
         bytes memory constructorArgs
     ) external pure returns (address, bytes32) {
         address hookAddress;
-        bytes memory creationCodeWithArgs = abi.encodePacked(
-            creationCode,
-            constructorArgs
-        );
+        bytes memory creationCodeWithArgs = abi.encodePacked(creationCode, constructorArgs);
 
         uint256 salt = seed;
-        for (salt; salt < MAX_LOOP; ) {
+        for (salt; salt < MAX_LOOP;) {
             hookAddress = computeAddress(deployer, salt, creationCodeWithArgs);
             if (uint160(hookAddress) & FLAG_MASK == flags) {
                 return (hookAddress, bytes32(salt));
@@ -55,25 +52,13 @@ library HookMiner {
     ///     In `forge script`, this should be `0x4e59b44847b379578588920cA78FbF26c0B4956C` (CREATE2 Deployer Proxy)
     /// @param salt The salt used to deploy the hook
     /// @param creationCode The creation code of a hook contract
-    function computeAddress(
-        address deployer,
-        uint256 salt,
-        bytes memory creationCode
-    ) public pure returns (address hookAddress) {
-        return
-            address(
-                uint160(
-                    uint256(
-                        keccak256(
-                            abi.encodePacked(
-                                bytes1(0xFF),
-                                deployer,
-                                salt,
-                                keccak256(creationCode)
-                            )
-                        )
-                    )
-                )
-            );
+    function computeAddress(address deployer, uint256 salt, bytes memory creationCode)
+        public
+        pure
+        returns (address hookAddress)
+    {
+        return address(
+            uint160(uint256(keccak256(abi.encodePacked(bytes1(0xFF), deployer, salt, keccak256(creationCode)))))
+        );
     }
 }

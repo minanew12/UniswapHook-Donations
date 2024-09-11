@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT 
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
 import "lib/v4-periphery/lib/v4-core/lib/forge-std/src/Test.sol";
@@ -16,12 +16,14 @@ import {PoolSwapTest} from "lib/v4-core/src/test/PoolSwapTest.sol";
 import {BaseHook} from "lib/v4-periphery/src/base/hooks/BaseHook.sol";
 import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
 
-contract DonationTest is Test, Deployers //, ISwap 
+contract DonationTest is
+    Test,
+    Deployers //, ISwap
 {
     using CurrencyLibrary for Currency;
 
     AfterSwapDonationHook donationHook;
-    
+
     // Mock token
     // MockERC20 token;
 
@@ -40,16 +42,10 @@ contract DonationTest is Test, Deployers //, ISwap
         (token0, token1) = (currency0, currency1);
 
         // Deploy the hook to an address with the correct flags
-        uint160 flags = uint160(
-                Hooks.AFTER_SWAP_FLAG
-        );
+        uint160 flags = uint160(Hooks.AFTER_SWAP_FLAG);
 
         address hookAddress = address(flags);
-        deployCodeTo(
-            "HookDonation.sol",
-            abi.encode(manager, ""),
-            hookAddress
-        );
+        deployCodeTo("HookDonation.sol", abi.encode(manager, ""), hookAddress);
         emit HookAddress(hookAddress);
         donationHook = AfterSwapDonationHook(hookAddress);
 
@@ -57,8 +53,8 @@ contract DonationTest is Test, Deployers //, ISwap
 
         // Initialize a pool with these two tokens
         uint24 fee = 3000;
-        (key, ) = initPoolAndAddLiquidity(token0, token1, ihook, fee, SQRT_PRICE_1_1, ZERO_BYTES);
-        
+        (key,) = initPoolAndAddLiquidity(token0, token1, ihook, fee, SQRT_PRICE_1_1, ZERO_BYTES);
+
         globalKey = key;
         separator();
     }
@@ -71,20 +67,20 @@ contract DonationTest is Test, Deployers //, ISwap
         address recipient = donationHook.donationRecipient();
 
         payee = donationHook.donationPayee();
-        
+
         // First, check that the donation is not enabled
         assert(!enabled);
         assert(recipient == address(0));
 
-        // Now, enable the donation, specifying that 10% 
+        // Now, enable the donation, specifying that 10%
         // always goes to the address specified in RECIPIENT
-        uint enabledPercent = 10;
+        uint256 enabledPercent = 10;
         donationHook.enableDonation(RECIPIENT, enabledPercent);
 
         // Now, verify that the recipent, the enabled status and percentage is correctly set
         recipient = donationHook.donationRecipient();
         enabled = donationHook.donationEnabled();
-        uint fetchedPercent = donationHook.donationPercent();
+        uint256 fetchedPercent = donationHook.donationPercent();
 
         payee = donationHook.donationPayee();
         assert(enabled);
@@ -102,7 +98,7 @@ contract DonationTest is Test, Deployers //, ISwap
         separator();
         println();
         console.log("test_disableDonation tx.origin %s", tx.origin);
-        uint percent = 20;
+        uint256 percent = 20;
         if (!enabled) {
             console.log("Donation not enabled!");
             console.log("Enabling donation");
@@ -124,7 +120,7 @@ contract DonationTest is Test, Deployers //, ISwap
         vm.stopPrank();
     }
 
-    function mint(address account, uint amount1, uint amount2) internal {
+    function mint(address account, uint256 amount1, uint256 amount2) internal {
         MockERC20 t0 = MockERC20(Currency.unwrap(token0));
         MockERC20 t1 = MockERC20(Currency.unwrap(token1));
         t0.mint(account, amount1 * 1 ether);
@@ -132,7 +128,7 @@ contract DonationTest is Test, Deployers //, ISwap
     }
 
     function test_Swap() public {
-        // 
+        //
         vm.startPrank(tx.origin);
 
         MockERC20 t0 = MockERC20(Currency.unwrap(token0));
@@ -141,7 +137,7 @@ contract DonationTest is Test, Deployers //, ISwap
         mint(tx.origin, 1000, 1000);
 
         uint256 percent = 10;
-        donationHook.enableDonation(RECIPIENT, percent); 
+        donationHook.enableDonation(RECIPIENT, percent);
 
         // Approve this contract to spend on behalf of tx.origin, which is the user / EOA
         t0.approve(address(donationHook), t0.balanceOf(tx.origin));
@@ -156,5 +152,4 @@ contract DonationTest is Test, Deployers //, ISwap
         bytes memory data = abi.encode(msg.sender);
         swap(pool, zeroForOne, amountToSwap, data);
     }
-
 }
