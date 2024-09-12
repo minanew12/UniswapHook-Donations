@@ -16,10 +16,7 @@ import {PoolSwapTest} from "lib/v4-core/src/test/PoolSwapTest.sol";
 import {BaseHook} from "lib/v4-periphery/src/base/hooks/BaseHook.sol";
 import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
 
-contract DonationTest is
-    Test,
-    Deployers
-{
+contract DonationTest is Test, Deployers {
     using CurrencyLibrary for Currency;
 
     AfterSwapDonationHook donationHook;
@@ -96,7 +93,7 @@ contract DonationTest is
 
             enabled = donationHook.donationEnabled();
             recipient = donationHook.donationRecipient();
-            uint setPercent = donationHook.donationPercent();
+            uint256 setPercent = donationHook.donationPercent();
             assert(enabled);
             assert(recipient == RECIPIENT);
             assert(setPercent == percent);

@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {BaseHook} from "lib/v4-periphery/src/base/hooks/BaseHook.sol";
 import {PoolKey} from "lib/v4-periphery/lib/v4-core/src/types/PoolKey.sol";
-import {IPoolManager} from "lib/v4-core/src/interfaces/IPoolManager.sol";
+import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {BalanceDelta} from "lib/v4-periphery/lib/v4-core/src/types/BalanceDelta.sol";
 import {Hooks} from "lib/v4-periphery/lib/v4-core/src/libraries/Hooks.sol";
 import {CurrencyLibrary, Currency} from "lib/v4-periphery/lib/v4-core/src/types/Currency.sol";
@@ -21,7 +21,7 @@ contract AfterSwapDonationHook is BaseHook {
     address public owner;
     mapping(address => DonationMapping) donationMap;
 
-    event Donation(address indexed payee, address indexed recipient, uint donatedAmount);
+    event Donation(address indexed payee, address indexed recipient, uint256 donatedAmount);
 
     // -------------- begin donation associated functions ---------------
     /// Disables donation for msg.sender
@@ -86,7 +86,6 @@ contract AfterSwapDonationHook is BaseHook {
         BalanceDelta delta,
         bytes calldata // userdata
     ) external override returns (bytes4, int128) {
-
         // Check that donation is enabled for the tx.origin, otherwise, return early
         if (!donationEnabled(tx.origin)) {
             return (this.afterSwap.selector, 0);
