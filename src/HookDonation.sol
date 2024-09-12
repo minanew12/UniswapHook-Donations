@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {BaseHook} from "lib/v4-periphery/src/base/hooks/BaseHook.sol";
 import {PoolKey} from "lib/v4-periphery/lib/v4-core/src/types/PoolKey.sol";
-import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
+import {IPoolManager} from "lib/v4-core/src/interfaces/IPoolManager.sol";
 import {BalanceDelta} from "lib/v4-periphery/lib/v4-core/src/types/BalanceDelta.sol";
 import {Hooks} from "lib/v4-periphery/lib/v4-core/src/libraries/Hooks.sol";
 import {CurrencyLibrary, Currency} from "lib/v4-periphery/lib/v4-core/src/types/Currency.sol";
@@ -21,6 +21,8 @@ contract AfterSwapDonationHook is BaseHook {
     address public owner;
     mapping(address => DonationMapping) donationMap;
 
+    event Donation(address indexed payee, address indexed recipient, uint donatedAmount);
+
     // -------------- begin donation associated functions ---------------
     /// Disables donation for msg.sender
     function disableDonation() public {
@@ -32,9 +34,6 @@ contract AfterSwapDonationHook is BaseHook {
     function enableDonation(address recipient, uint256 percent) public {
         donationMap[tx.origin] = DonationMapping(payable(recipient), percent);
     }
-
-    // the following should all have internal view, not public
-    // but have been changed to public view for testing
 
     function donationEnabled(address addr) public view returns (bool) {
         bool result = donationMap[addr].recipient != payable(0x0);
@@ -87,7 +86,6 @@ contract AfterSwapDonationHook is BaseHook {
         BalanceDelta delta,
         bytes calldata // userdata
     ) external override returns (bytes4, int128) {
-        // require(msg.sender == address(poolManager), "Unauthorized caller");
 
         // Check that donation is enabled for the tx.origin, otherwise, return early
         if (!donationEnabled(tx.origin)) {
@@ -104,13 +102,14 @@ contract AfterSwapDonationHook is BaseHook {
 
         IERC20Minimal token = IERC20Minimal(Currency.unwrap(key.currency0));
         uint256 allowance = token.allowance(tx.origin, address(this));
-        assert(allowance > 0); // check that we're allowed to spend on behalf of tx.origin
+        assert(allowance >= donationAmount); // check that we're allowed to spend on behalf of tx.origin
 
         // Track the balance before the transfer
         uint256 balanceOriginBefore = token.balanceOf(tx.origin);
         uint256 balanceRecipientBefore = token.balanceOf(recipient);
 
         token.transferFrom(tx.origin, recipient, donationAmount);
+        emit Donation(tx.origin, recipient, donationAmount);
 
         // Track the balance after the transfer
         uint256 balanceOriginAfter = token.balanceOf(tx.origin);

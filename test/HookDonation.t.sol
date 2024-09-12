@@ -18,17 +18,14 @@ import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
 
 contract DonationTest is
     Test,
-    Deployers //, ISwap
+    Deployers
 {
     using CurrencyLibrary for Currency;
 
     AfterSwapDonationHook donationHook;
 
-    // Mock token
-    // MockERC20 token;
-
     // The two currencies (tokens) from the pool
-    Currency token0 = Currency.wrap(address(0));
+    Currency token0;
     Currency token1;
     PoolKey globalKey;
     address constant RECIPIENT = address(0x01);
@@ -76,15 +73,14 @@ contract DonationTest is
         uint256 enabledPercent = 10;
         donationHook.enableDonation(RECIPIENT, enabledPercent);
 
-        // Now, verify that the recipent, the enabled status and percentage is correctly set
+        // Now, verify that the recipent, the enabled status, percentage and recipient is correctly set
         recipient = donationHook.donationRecipient();
         enabled = donationHook.donationEnabled();
-        uint256 fetchedPercent = donationHook.donationPercent();
+        uint256 setPercent = donationHook.donationPercent();
 
-        payee = donationHook.donationPayee();
         assert(enabled);
         assert(recipient == RECIPIENT);
-        assert(fetchedPercent == enabledPercent);
+        assert(setPercent == enabledPercent);
         vm.stopPrank();
     }
 
@@ -97,12 +93,14 @@ contract DonationTest is
         uint256 percent = 20;
         if (!enabled) {
             donationHook.enableDonation(RECIPIENT, percent);
-        }
 
-        enabled = donationHook.donationEnabled();
-        recipient = donationHook.donationRecipient();
-        assert(enabled);
-        assert(recipient == RECIPIENT);
+            enabled = donationHook.donationEnabled();
+            recipient = donationHook.donationRecipient();
+            uint setPercent = donationHook.donationPercent();
+            assert(enabled);
+            assert(recipient == RECIPIENT);
+            assert(setPercent == percent);
+        }
 
         donationHook.disableDonation();
         enabled = donationHook.donationEnabled();
@@ -113,6 +111,9 @@ contract DonationTest is
         vm.stopPrank();
     }
 
+    /// @param account The account to mint to
+    /// @param amount1 The number of units to mint to, for key.currency0
+    /// @param amount2 The amount of units to mint to, for key.currency1
     function mint(address account, uint256 amount1, uint256 amount2) internal {
         MockERC20 t0 = MockERC20(Currency.unwrap(token0));
         MockERC20 t1 = MockERC20(Currency.unwrap(token1));
@@ -121,7 +122,6 @@ contract DonationTest is
     }
 
     function test_Swap() public {
-        //
         vm.startPrank(tx.origin);
 
         MockERC20 t0 = MockERC20(Currency.unwrap(token0));
@@ -132,7 +132,8 @@ contract DonationTest is
         uint256 percent = 10;
         donationHook.enableDonation(RECIPIENT, percent);
 
-        // Approve this contract to spend on behalf of tx.origin, which is the user / EOA
+        // Approve the donationHook contract to spend on behalf of tx.origin, which is the user / EOA
+        // This is essential, otherwise, in afterSwap, token.transferFrom will fail
         t0.approve(address(donationHook), t0.balanceOf(tx.origin));
         t1.approve(address(donationHook), t1.balanceOf(tx.origin));
 
