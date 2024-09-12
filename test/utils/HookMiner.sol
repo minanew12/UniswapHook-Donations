@@ -32,7 +32,7 @@ library HookMiner {
         bytes memory creationCodeWithArgs = abi.encodePacked(creationCode, constructorArgs);
 
         uint256 salt = seed;
-        for (salt; salt < MAX_LOOP;) {
+        for (salt; salt < MAX_LOOP+seed;) {
             hookAddress = computeAddress(deployer, salt, creationCodeWithArgs);
             if (uint160(hookAddress) & FLAG_MASK == flags) {
                 return (hookAddress, bytes32(salt));
@@ -43,7 +43,8 @@ library HookMiner {
             }
         }
 
-        revert("HookMiner: could not find salt");
+        // revert("HookMiner: could not find salt");
+        return (address(0), bytes32(salt));
     }
 
     /// @notice Precompute a contract address deployed via CREATE2

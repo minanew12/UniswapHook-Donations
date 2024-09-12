@@ -122,17 +122,17 @@ contract DonationTest is Test, Deployers {
         vm.startPrank(tx.origin);
 
         MockERC20 t0 = MockERC20(Currency.unwrap(token0));
-        MockERC20 t1 = MockERC20(Currency.unwrap(token1));
 
         mint(tx.origin, 1000, 1000);
 
         uint256 percent = 10;
+        // Workflow: The user will need to call enableDonation on the AfterSwapDonationHook contract
         donationHook.enableDonation(RECIPIENT, percent);
 
         // Approve the donationHook contract to spend on behalf of tx.origin, which is the user / EOA
         // This is essential, otherwise, in afterSwap, token.transferFrom will fail
-        t0.approve(address(donationHook), t0.balanceOf(tx.origin));
-        t1.approve(address(donationHook), t1.balanceOf(tx.origin));
+        // Workflow: The user will need to call approve for token0 on their own.
+        t0.approve(address(donationHook), type(uint256).max); 
 
         vm.stopPrank();
 
