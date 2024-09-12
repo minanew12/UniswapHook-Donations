@@ -13,7 +13,7 @@ import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
 import {CurrencyLibrary, Currency} from "lib/v4-core/src/types/Currency.sol";
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 
-contract CounterScript is Script, Deployers {
+contract AfterSwapDonationHookScript is Script, Deployers {
     address constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
 
     AfterSwapDonationHook public donationHook;
