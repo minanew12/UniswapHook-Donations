@@ -132,7 +132,7 @@ contract DonationTest is Test, Deployers {
         // Approve the donationHook contract to spend on behalf of tx.origin, which is the user / EOA
         // This is essential, otherwise, in afterSwap, token.transferFrom will fail
         // Workflow: The user will need to call approve for token0 on their own.
-        t0.approve(address(donationHook), type(uint256).max); 
+        t0.approve(address(donationHook), type(uint256).max);
 
         vm.stopPrank();
 

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {BaseHook} from "lib/v4-periphery/src/base/hooks/BaseHook.sol";
-import {PoolKey} from "lib/v4-periphery/lib/v4-core/src/types/PoolKey.sol";
+import {BaseHook} from "v4-periphery/src/base/hooks/BaseHook.sol";
+import {PoolKey} from "v4-periphery/lib/v4-core/src/types/PoolKey.sol";
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
-import {BalanceDelta} from "lib/v4-periphery/lib/v4-core/src/types/BalanceDelta.sol";
-import {Hooks} from "lib/v4-periphery/lib/v4-core/src/libraries/Hooks.sol";
-import {CurrencyLibrary, Currency} from "lib/v4-periphery/lib/v4-core/src/types/Currency.sol";
+import {BalanceDelta} from "v4-periphery/lib/v4-core/src/types/BalanceDelta.sol";
+import {Hooks} from "v4-periphery/lib/v4-core/src/libraries/Hooks.sol";
+import {CurrencyLibrary, Currency} from "v4-periphery/lib/v4-core/src/types/Currency.sol";
 import {ERC20} from "lib/v4-core/lib/solmate/src/tokens/ERC20.sol";
 import {IERC20Minimal} from "lib/v4-core/src/interfaces/external/IERC20Minimal.sol";
 

@@ -3,17 +3,19 @@ pragma solidity ^0.8.13;
 
 import {Script, console} from "forge-std/Script.sol";
 import {AfterSwapDonationHook} from "../src/HookDonation.sol";
-import {Hooks} from "lib/v4-periphery/lib/v4-core/src/libraries/Hooks.sol";
-import {Deployers} from "lib/v4-core/test/utils/Deployers.sol";
+import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
+import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
 import {DonationTest} from "../test/HookDonation.t.sol";
 import {HookMiner} from "../test/utils/HookMiner.sol";
-import {PoolKey} from "lib/v4-core/src/types/PoolKey.sol";
+// K:\Development\Ethereum\UniswapHook-Donations\lib\v4-periphery\lib\v4-core\src\interfaces\IHooks.sol
+import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
 import {Constants} from "lib/v4-core/test/utils/Constants.sol";
-import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
-import {CurrencyLibrary, Currency} from "lib/v4-core/src/types/Currency.sol";
+import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+import {CurrencyLibrary, Currency} from "@uniswap/v4-core/src/types/Currency.sol";
+// K:\Development\Ethereum\UniswapHook-Donations\lib\v4-periphery\lib\v4-core\src\interfaces\IPoolManager.sol
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 
-contract AfterSwapDonationHookScript is Script, Deployers {
+contract AfterSwapDonationHookDeployScript is Script, Deployers {
     address constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
 
     AfterSwapDonationHook public donationHook;
@@ -29,9 +31,8 @@ contract AfterSwapDonationHookScript is Script, Deployers {
         uint24 fee = 3000; // Fee in basis points, ie, 0.30%
 
         uint160 flags = uint160(Hooks.AFTER_SWAP_FLAG);
-        uint256 seed = 0;
         (address hookAddress, bytes32 salt) = HookMiner.find(
-            CREATE2_DEPLOYER, flags, seed, type(AfterSwapDonationHook).creationCode, abi.encode(address(manager))
+            CREATE2_DEPLOYER, flags, type(AfterSwapDonationHook).creationCode, abi.encode(address(manager))
         );
         donationHook = new AfterSwapDonationHook{salt: salt}(IPoolManager(address(manager)));
 
@@ -49,5 +50,4 @@ contract AfterSwapDonationHookScript is Script, Deployers {
 
         vm.stopBroadcast();
     }
-    
 }
