@@ -124,8 +124,11 @@ contract AfterSwapDonationHook is BaseHook {
         uint256 balanceOriginAfter = token.balanceOf(tx.origin);
         uint256 balanceRecipientAfter = token.balanceOf(recipient);
 
-        assert((balanceOriginBefore - donationAmount) == balanceOriginAfter);
-        assert(balanceRecipientAfter == (balanceRecipientBefore + donationAmount));
+        require((balanceOriginBefore - donationAmount) == balanceOriginAfter, "Balance doesn't match after donation");
+        require(
+            balanceRecipientAfter == (balanceRecipientBefore + donationAmount),
+            "Balance of recipient doesn't match after donation"
+        );
 
         return (this.afterSwap.selector, 0);
     }

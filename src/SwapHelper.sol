@@ -14,13 +14,9 @@ import {IHooks} from "v4-core/interfaces/IHooks.sol";
 import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
 import {Currency} from "v4-core/types/Currency.sol";
 import {HookMiner} from "../test/utils/HookMiner.sol";
-// import {HookMiner} from "../test/HookMiner.sol";
-// import {BasicHook} from "../src/BasicHook.sol";
 import {AfterSwapDonationHook} from "../src/HookDonation.sol";
 import "forge-std/console.sol";
-// K:\Development\Ethereum\UniswapHook-Donations\lib\v4-periphery\lib\v4-core\src\libraries\Hooks.sol
 import "@uniswap/v4-core/src/libraries/Hooks.sol";
-// K:\Development\Ethereum\UniswapHook-Donations\lib\v4-periphery\lib\v4-core\src\libraries\TickMath.sol
 import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
 // import "forge-std/console.sol";
 
@@ -38,18 +34,6 @@ contract SwapHelper {
     PoolKey key;
 
     constructor(MockERC20 tokenA, MockERC20 tokenB, address hook) {
-        // vm.startBroadcast();
-
-        // console.log("Wallet / msg.sender is: %s", msg.sender);
-
-        // MockERC20 tokenA = new MockERC20("Token0", "TK0", 18);
-        // MockERC20 tokenB = new MockERC20("Token1", "TK1", 18);
-
-        // console.log("tokenA: %s", address(tokenA));
-        // console.log("tokenB: %s", address(tokenB));
-
-        // console.log("SwapHelper: %s", address(this));
-
         if (address(tokenA) > address(tokenB)) {
             (token0, token1) = (Currency.wrap(address(tokenB)), Currency.wrap(address(tokenA)));
         } else {
@@ -69,24 +53,9 @@ contract SwapHelper {
         tokenB.mint(address(this), 100 * 10 ** 18);
 
         key = PoolKey({currency0: token0, currency1: token1, fee: 3000, tickSpacing: 120, hooks: IHooks(address(hook))});
-
-        // the second argument here is SQRT_PRICE_1_1
-        // manager.initialize(key, 79228162514264337593543950336, new bytes(0));
-        // modifyLiquidityRouter.modifyLiquidity(
-        //     key,
-        //     IPoolManager.ModifyLiquidityParams({
-        //         tickLower: -120,
-        //         tickUpper: 120,
-        //         liquidityDelta: 10e18,
-        //         salt: 0
-        //     }),
-        //     new bytes(0)
-        // );
     }
 
     function Swap(bool zeroForOne, int256 amountToSwap) public {
-        // MockERC20 t0 = MockERC20(Currency.unwrap(token0));
-
         // uint256 percent = 10;
         // // Workflow: The user will need to call enableDonation on the AfterSwapDonationHook contract
         // donationHook.enableDonation(RECIPIENT, percent);
