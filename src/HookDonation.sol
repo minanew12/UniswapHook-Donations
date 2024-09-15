@@ -2,13 +2,12 @@
 pragma solidity ^0.8.13;
 
 import {BaseHook} from "v4-periphery/src/base/hooks/BaseHook.sol";
-import {PoolKey} from "v4-periphery/lib/v4-core/src/types/PoolKey.sol";
-import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
-import {BalanceDelta} from "v4-periphery/lib/v4-core/src/types/BalanceDelta.sol";
-import {Hooks} from "v4-periphery/lib/v4-core/src/libraries/Hooks.sol";
-import {CurrencyLibrary, Currency} from "v4-periphery/lib/v4-core/src/types/Currency.sol";
-import {ERC20} from "lib/v4-core/lib/solmate/src/tokens/ERC20.sol";
-import {IERC20Minimal} from "lib/v4-core/src/interfaces/external/IERC20Minimal.sol";
+import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
+import {Hooks} from "v4-core/libraries/Hooks.sol";
+import {PoolKey} from "v4-core/types/PoolKey.sol";
+import {Currency, CurrencyLibrary} from "v4-core/types/Currency.sol";
+import {BalanceDelta} from "@uniswap/v4-core/src/types/BalanceDelta.sol";
+import {IERC20Minimal} from "@uniswap/v4-core/src/interfaces/external/IERC20Minimal.sol";
 
 contract AfterSwapDonationHook is BaseHook {
     using CurrencyLibrary for Currency;
@@ -21,18 +20,24 @@ contract AfterSwapDonationHook is BaseHook {
     address public owner;
     mapping(address => DonationMapping) donationMap;
 
-    event Donation(address indexed payee, address indexed recipient, uint256 donatedAmount);
+    //
+    event DonatedInfo(address indexed recipient, uint256 donatedAmount, bool successfulTransfer);
+    event DonationDisabled(address indexed recipient, uint256 percent);
+    event DonationEnabled(address indexed recipient, uint256 percent);
 
     // -------------- begin donation associated functions ---------------
     /// Disables donation for msg.sender
     function disableDonation() public {
         // Reset the value to the default value.
+        DonationMapping memory localMapping = donationMap[msg.sender];
         delete donationMap[msg.sender];
+        emit DonationDisabled(localMapping.recipient, localMapping.percent);
     }
 
     /// Enables donation to the specified recipient, with the given percentage
     function enableDonation(address recipient, uint256 percent) public {
         donationMap[tx.origin] = DonationMapping(payable(recipient), percent);
+        emit DonationEnabled(recipient, percent);
     }
 
     function donationEnabled(address addr) public view returns (bool) {
@@ -93,22 +98,27 @@ contract AfterSwapDonationHook is BaseHook {
 
         // calculate the amount to donate away.
         // The donation amount is always the first currency.
-        uint256 spendAmount =
-            swapParams.amountSpecified < 0 ? uint256(-swapParams.amountSpecified) : uint256(int256(-delta.amount0()));
+        // if (delta.amount0 < 0)
+        //     swapParams.amountSpecified < 0 ? uint256(-swapParams.amountSpecified) : uint256(int256(-delta.amount0()));
+        uint256 spendAmount = uint256(int256(delta.amount0()));
+        if (delta.amount0() < 0) {
+            spendAmount = uint256(int256(-delta.amount0()));
+        }
+
         uint256 percent = donationPercent(tx.origin);
         uint256 donationAmount = (spendAmount * percent) / 100;
         address recipient = donationRecipient(tx.origin);
 
         IERC20Minimal token = IERC20Minimal(Currency.unwrap(key.currency0));
         uint256 allowance = token.allowance(tx.origin, address(this));
-        assert(allowance >= donationAmount); // check that we're allowed to spend on behalf of tx.origin
+        require(allowance >= donationAmount); // check that we're allowed to spend on behalf of tx.origin
 
         // Track the balance before the transfer
         uint256 balanceOriginBefore = token.balanceOf(tx.origin);
         uint256 balanceRecipientBefore = token.balanceOf(recipient);
 
-        token.transferFrom(tx.origin, recipient, donationAmount);
-        emit Donation(tx.origin, recipient, donationAmount);
+        bool successfulTransfer = token.transferFrom(tx.origin, recipient, donationAmount);
+        emit DonatedInfo(recipient, donationAmount, successfulTransfer);
 
         // Track the balance after the transfer
         uint256 balanceOriginAfter = token.balanceOf(tx.origin);
