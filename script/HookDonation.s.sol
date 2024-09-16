@@ -86,8 +86,8 @@ contract AfterSwapHookDonationDeployScript is Script {
         console.log("SwapHelper address: %s", address(swapHelper));
 
         // initPoolAndAddLiquidity
-        // the second argument here is SQRT_PRICE_1_1
-        manager.initialize(key, 79228162514264337593543950336, new bytes(0));
+        // the second argument here is MAX_SQRT_PRICE - 1
+        manager.initialize(key, 1461446703485210103287273052203988822378723970342 - 1, new bytes(0));
         // modifyLiquidityRouter.modifyLiquidity(
         //     key,
         //     IPoolManager.ModifyLiquidityParams({

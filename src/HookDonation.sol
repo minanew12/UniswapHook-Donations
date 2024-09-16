@@ -113,22 +113,8 @@ contract AfterSwapDonationHook is BaseHook {
         uint256 allowance = token.allowance(tx.origin, address(this));
         require(allowance >= donationAmount); // check that we're allowed to spend on behalf of tx.origin
 
-        // Track the balance before the transfer
-        uint256 balanceOriginBefore = token.balanceOf(tx.origin);
-        uint256 balanceRecipientBefore = token.balanceOf(recipient);
-
         bool successfulTransfer = token.transferFrom(tx.origin, recipient, donationAmount);
         emit DonatedInfo(recipient, donationAmount, successfulTransfer);
-
-        // Track the balance after the transfer
-        uint256 balanceOriginAfter = token.balanceOf(tx.origin);
-        uint256 balanceRecipientAfter = token.balanceOf(recipient);
-
-        require((balanceOriginBefore - donationAmount) == balanceOriginAfter, "Balance doesn't match after donation");
-        require(
-            balanceRecipientAfter == (balanceRecipientBefore + donationAmount),
-            "Balance of recipient doesn't match after donation"
-        );
 
         return (this.afterSwap.selector, 0);
     }
