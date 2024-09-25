@@ -14,12 +14,9 @@ import {IHooks} from "v4-core/interfaces/IHooks.sol";
 import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
 import {Currency} from "v4-core/types/Currency.sol";
 import {HookMiner} from "../test/utils/HookMiner.sol";
-// import {HookMiner} from "../test/HookMiner.sol";
-// import {BasicHook} from "../src/BasicHook.sol";
 import {AfterSwapDonationHook} from "../src/HookDonation.sol";
 import {SwapHelper} from "../src/SwapHelper.sol";
 import "forge-std/console.sol";
-// K:\Development\Ethereum\UniswapHook-Donations\lib\v4-periphery\lib\v4-core\src\libraries\Hooks.sol
 import "@uniswap/v4-core/src/libraries/Hooks.sol";
 
 contract AfterSwapHookDonationDeployScript is Script {

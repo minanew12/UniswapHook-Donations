@@ -1,21 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-// import "lib/v4-periphery/lib/v4-core/lib/forge-std/src/Test.sol";
-// import {console} from "lib/v4-periphery/lib/v4-core/lib/forge-std/src/console.sol";
-// import {Hooks} from "lib/v4-core/src/libraries/Hooks.sol";
-// import {Deployers} from "lib/v4-core/test/utils/Deployers.sol";
-// import {IPoolManager} from "lib/v4-core/src/interfaces/IPoolManager.sol";
-// import {AfterSwapDonationHook} from "../src/HookDonation.sol";
-// import {Currency, CurrencyLibrary} from "lib/v4-core/src/types/Currency.sol";
-// import {MockERC20} from "lib/v4-core/lib/solmate/src/test/utils/mocks/MockERC20.sol"; // ...
-// import {PoolKey} from "lib/v4-core/src/types/PoolKey.sol";
-// import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
-// import {HookMiner} from "./utils/HookMiner.sol";
-// import {PoolSwapTest} from "lib/v4-core/src/test/PoolSwapTest.sol";
-// import {BaseHook} from "lib/v4-periphery/src/base/hooks/BaseHook.sol";
-// import {IHooks} from "lib/v4-core/src/interfaces/IHooks.sol";
-
 import "forge-std/Test.sol";
 import "@uniswap/v4-core/test/utils/Deployers.sol";
 import {AfterSwapDonationHook} from "../src/HookDonation.sol";
@@ -145,6 +130,10 @@ contract DonationTest is Test, Deployers {
         bool zeroForOne = true;
         int256 amountToSwap = 1 ether;
         bytes memory data = abi.encode(msg.sender);
+
         swap(pool, zeroForOne, amountToSwap, data);
+        swap(pool, !zeroForOne, -amountToSwap, data);
+        swap(pool, zeroForOne, -amountToSwap, data);
+        console.log("Swapped 3 times!");
     }
 }
