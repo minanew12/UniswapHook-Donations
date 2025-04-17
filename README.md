@@ -12,9 +12,6 @@ forge b
 # Test
 forge test -vvv
 
-# Deploy (in PowerShell)
-forge script AfterSwapHookDonationDeployScript  --rpc-url $env:DEPLOY_URL --private-key $env:FOUNDRY_PRIVATE_KEY --broadcast --gas-price 10000000000000000000 -vvv
-
 Chee-Wee, Chua  
 12 Sep 2024.
 
